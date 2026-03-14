@@ -734,7 +734,14 @@ function initSupa(){
 async function cloudSave(table, id, data){
   if(!supa) return;
   try{
-    var row = {id: id, data: data, updated_at: new Date().toISOString()};
+    var saveData = Object.assign({}, data);
+    // Store lock separately - never let data write overwrite the lock column
+    var row = {
+      id: id,
+      data: saveData,
+      locked_by_piu: saveData.lockedByPIU===true,
+      updated_at: new Date().toISOString()
+    };
     var result = await supa.from(table).upsert(row, {onConflict: 'id'});
     if(result.error) console.warn('cloudSave error:', result.error);
   } catch(e){ console.warn('cloudSave error:', e); }
@@ -769,7 +776,12 @@ async function syncFromCloud(){
     if(r1.error) throw r1.error;
     if(r2.error) throw r2.error;
     if(r3.error) throw r3.error;
-    db.sps = r1.data.map(function(r){ return r.data; });
+    db.sps = r1.data.map(function(r){
+      var d = r.data;
+      // Always use the dedicated locked_by_piu column as source of truth
+      d.lockedByPIU = r.locked_by_piu===true;
+      return d;
+    });
     db.pys = r2.data.map(function(r){ 
       var d=r.data; 
       if(!d.refNum) d.refNum=r.ref_num; 
@@ -1196,15 +1208,36 @@ function approveRecord(idx){
 function lockDA(da){
   if(!cu||cu.role!=='piu') return;
   var now=ts();
-  db.sps.forEach(function(s){ if(s.da===da){ s.lockedByPIU=true; s.lockedBy=cu.name; s.lockedAt=now; } });
-  db.pys.forEach(function(p){ if(p.da===da){ p.lockedByPIU=true; p.lockedBy=cu.name; } });
-  saveDB(); renderDash(); toast('\uD83D\uDD12 '+daAbbr(da)+' locked','warn');
+  db.sps.forEach(function(s){
+    if(s.da===da){
+      s.lockedByPIU=true; s.lockedBy=cu.name; s.lockedAt=now;
+      if(supa) supa.from('subprojects').update({locked_by_piu:true,data:s,updated_at:now}).eq('id',s.id);
+    }
+  });
+  db.pys.forEach(function(p){
+    if(p.da===da){
+      p.lockedByPIU=true; p.lockedBy=cu.name;
+      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:true,data:p,updated_at:now}).eq('ref_num',Number(p.refNum));
+    }
+  });
+  saveDB(); renderDash(); toast(daAbbr(da)+' locked','warn');
 }
 function unlockDA(da){
   if(!cu||cu.role!=='piu') return;
-  db.sps.forEach(function(s){ if(s.da===da){ s.lockedByPIU=false; s.lockedBy=null; s.lockedAt=null; } });
-  db.pys.forEach(function(p){ if(p.da===da){ p.lockedByPIU=false; p.lockedBy=null; } });
-  saveDB(); renderDash(); toast('\uD83D\uDD13 '+daAbbr(da)+' unlocked','info');
+  var now=ts();
+  db.sps.forEach(function(s){
+    if(s.da===da){
+      s.lockedByPIU=false; s.lockedBy=null; s.lockedAt=null;
+      if(supa) supa.from('subprojects').update({locked_by_piu:false,data:s,updated_at:now}).eq('id',s.id);
+    }
+  });
+  db.pys.forEach(function(p){
+    if(p.da===da){
+      p.lockedByPIU=false; p.lockedBy=null;
+      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:false,data:p,updated_at:now}).eq('ref_num',Number(p.refNum));
+    }
+  });
+  saveDB(); renderDash(); toast(daAbbr(da)+' unlocked','info');
 }
 function toggleAllChk(cb){ document.querySelectorAll('.row-chk').forEach(function(c){ c.checked=cb.checked; }); }
 function getCheckedIdx(){ var idxs=[]; document.querySelectorAll('.row-chk:checked').forEach(function(c){ idxs.push(parseInt(c.dataset.idx)); }); return idxs; }
@@ -1411,14 +1444,34 @@ function clearSPForm(){
 }
 
 function editSP(idx){
-  // Refresh from db by index - but verify it's still valid
   var r=db.sps[idx];
   if(!r){ toast('Record not found','err'); return; }
-  if(r.lockedByPIU===true){
-    try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
-    toast('⛔ Bu kayıt PIU tarafından kilitlendi. Değişiklik yapılamaz.','err');
+  // Double-check lock from cloud before allowing edit
+  if(supa && r.id){
+    supa.from('subprojects').select('data').eq('id',r.id).maybeSingle().then(function(res){
+      if(res.data && res.data.data && res.data.data.lockedByPIU===true){
+        // Update local and block
+        db.sps[idx].lockedByPIU=true;
+        try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+        toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
+        renderSPList(); // refresh to show lock icon
+        return;
+      }
+      // Not locked - proceed with edit
+      _doEditSP(idx);
+    });
     return;
   }
+  if(r.lockedByPIU===true){
+    try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+    toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
+    return;
+  }
+  _doEditSP(idx);
+}
+function _doEditSP(idx){
+  var r=db.sps[idx];
+  if(!r) return;
   editSpIdx=idx;
   $$('sp-form').style.display='block';
   $$('sp-list').style.display='none';
@@ -1766,22 +1819,23 @@ function toggleLockSP(idx){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
   var s=db.sps[idx];
   if(!s){ toast('Record not found','err'); return; }
-  // Toggle lock state
-  s.lockedByPIU = (s.lockedByPIU===true)?false:true;
-  s.lockedBy = s.lockedByPIU?cu.name:null;
-  s.lockedAt = s.lockedByPIU?ts():null;
+  var newLocked = s.lockedByPIU!==true;
+  s.lockedByPIU = newLocked;
+  s.lockedBy = newLocked?cu.name:null;
+  s.lockedAt = newLocked?ts():null;
   saveDB();
-  // Render immediately with updated state
   renderSPList();
   renderAllSP();
   if($$('page-dashboard').classList.contains('active')) _renderPIUDashInner();
-  toast(s.lockedByPIU?'Locked':'Unlocked', s.lockedByPIU?'warn':'info');
-  // Save to cloud async (fire and forget)
+  toast(newLocked?'Locked':'Unlocked', newLocked?'warn':'info');
+  // Save lock to dedicated column in cloud
   if(supa){
-    supa.from('subprojects').upsert({id: s.id, data: s, updated_at: new Date().toISOString()}, {onConflict:'id'})
-      .then(function(r){ 
-        if(r.error) console.error('Lock cloud save error:', r.error);
-        else console.log('Lock cloud saved: id='+s.id+' locked='+s.lockedByPIU);
+    supa.from('subprojects')
+      .update({locked_by_piu: newLocked, data: s, updated_at: new Date().toISOString()})
+      .eq('id', s.id)
+      .then(function(r){
+        if(r.error) console.error('Lock save error:', r.error);
+        else console.log('Lock saved: id='+s.id+' locked='+newLocked);
       });
   }
 }
@@ -1800,9 +1854,14 @@ function lockAll(lock){
   db.sps.forEach(function(s){ s.lockedByPIU=lock; s.lockedBy=lock?cu.name:null; s.lockedAt=lock?now:null; });
   db.pys.forEach(function(p){ p.lockedByPIU=lock; p.lockedBy=lock?cu.name:null; });
   saveDB();
-  // Push all lock states to cloud
-  db.sps.forEach(function(s){ cloudSave('subprojects', s.id, s); });
-  db.pys.forEach(function(p){ cloudSavePY(Number(p.refNum), p); });
+  if(supa){
+    db.sps.forEach(function(s){
+      supa.from('subprojects').update({locked_by_piu:lock, data:s, updated_at:now}).eq('id',s.id);
+    });
+    db.pys.forEach(function(p){
+      if(p.refNum) supa.from('payments').update({locked_by_piu:lock, data:p, updated_at:now}).eq('ref_num',Number(p.refNum));
+    });
+  }
   renderSPList(); renderPYList(); renderAllSP(); renderAllPY();
   toast(lock?'All locked':'All unlocked', lock?'warn':'info');
 }
