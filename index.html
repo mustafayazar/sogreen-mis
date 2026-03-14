@@ -1038,12 +1038,7 @@ function renderDash(){
 }
 
 function renderPIUDash(){
-  var main=$$('page-dashboard');
-  // Sync first, then render
-  if(supa){
-    syncFromCloud().then(function(){ _renderPIUDashInner(); });
-    return;
-  }
+  // Render immediately with current db state (no sync)
   _renderPIUDashInner();
 }
 function _renderPIUDashInner(){
@@ -1183,7 +1178,7 @@ function _renderPIUDashInner(){
       +'<td>'+(s.component||'\u2014')+'</td>'
       +'<td>'+sc+'</td>'
       +'<td style="font-family:var(--mono);font-size:11px">'+(s.approvedAmount?fmtNum(s.approvedAmount):'-')+'</td>'
-      +'<td><button class="btn btn-xs" style="background:'+(s.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockSP('+idx+');renderDash()">'+(s.lockedByPIU?'\uD83D\uDD12':'\uD83D\uDD13')+'</button></td>'
+      +'<td><button class="btn btn-xs" style="background:'+(s.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockSP('+idx+')">'+(s.lockedByPIU?'\uD83D\uDD12':'\uD83D\uDD13')+'</button></td>'
       +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
       +'<td style="display:flex;gap:4px">'
       +(s.status!=='Approved'?'<button class="btn btn-xs" style="background:#dcfce7;color:#15803d;border:none" onclick="approveRecord('+idx+')">&#x2705;</button>':'')
