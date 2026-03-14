@@ -1416,7 +1416,9 @@ function clearSPForm(){
 }
 
 function editSP(idx){
+  // Refresh from db by index - but verify it's still valid
   var r=db.sps[idx];
+  if(!r){ toast('Record not found','err'); return; }
   if(r.lockedByPIU===true){
     try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
     toast('⛔ Bu kayıt PIU tarafından kilitlendi. Değişiklik yapılamaz.','err');
@@ -1767,13 +1769,26 @@ function filterPY(el){
 // ═══════════════════════════════════════════
 function toggleLockSP(idx){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
-  db.sps[idx].lockedByPIU=!db.sps[idx].lockedByPIU;
-  db.sps[idx].lockedBy=db.sps[idx].lockedByPIU?cu.name:null;
-  db.sps[idx].lockedAt=db.sps[idx].lockedByPIU?ts():null;
+  var s=db.sps[idx];
+  if(!s){ toast('Record not found','err'); return; }
+  // Toggle lock state
+  s.lockedByPIU = (s.lockedByPIU===true)?false:true;
+  s.lockedBy = s.lockedByPIU?cu.name:null;
+  s.lockedAt = s.lockedByPIU?ts():null;
   saveDB();
-  cloudSave('subprojects', db.sps[idx].id, db.sps[idx]);
-  renderSPList(); renderAllSP();
-  toast(db.sps[idx].lockedByPIU?'Locked':'Unlocked', db.sps[idx].lockedByPIU?'warn':'info');
+  // Render immediately with updated state
+  renderSPList();
+  renderAllSP();
+  if($$('page-dashboard').classList.contains('active')) _renderPIUDashInner();
+  toast(s.lockedByPIU?'Locked':'Unlocked', s.lockedByPIU?'warn':'info');
+  // Save to cloud async (fire and forget)
+  if(supa){
+    supa.from('subprojects').upsert({id: s.id, data: s, updated_at: new Date().toISOString()}, {onConflict:'id'})
+      .then(function(r){ 
+        if(r.error) console.error('Lock cloud save error:', r.error);
+        else console.log('Lock cloud saved: id='+s.id+' locked='+s.lockedByPIU);
+      });
+  }
 }
 function toggleLockPY(idx){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
