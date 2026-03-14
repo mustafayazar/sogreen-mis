@@ -1418,9 +1418,8 @@ function clearSPForm(){
 function editSP(idx){
   var r=db.sps[idx];
   if(r.lockedByPIU===true){
-    // Play ding sound
     try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
-    toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
+    toast('⛔ Bu kayıt PIU tarafından kilitlendi. Değişiklik yapılamaz.','err');
     return;
   }
   editSpIdx=idx;
@@ -1771,23 +1770,31 @@ function toggleLockSP(idx){
   db.sps[idx].lockedByPIU=!db.sps[idx].lockedByPIU;
   db.sps[idx].lockedBy=db.sps[idx].lockedByPIU?cu.name:null;
   db.sps[idx].lockedAt=db.sps[idx].lockedByPIU?ts():null;
-  saveDB(); renderSPList(); renderAllSP();
-  toast(db.sps[idx].lockedByPIU?'🔒 Subproject locked':'🔓 Subproject unlocked', db.sps[idx].lockedByPIU?'warn':'info');
+  saveDB();
+  cloudSave('subprojects', db.sps[idx].id, db.sps[idx]);
+  renderSPList(); renderAllSP();
+  toast(db.sps[idx].lockedByPIU?'Locked':'Unlocked', db.sps[idx].lockedByPIU?'warn':'info');
 }
 function toggleLockPY(idx){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
   db.pys[idx].lockedByPIU=!db.pys[idx].lockedByPIU;
   db.pys[idx].lockedBy=db.pys[idx].lockedByPIU?cu.name:null;
-  saveDB(); renderPYList(); renderAllPY();
-  toast(db.pys[idx].lockedByPIU?'🔒 Payment locked':'🔓 Payment unlocked', db.pys[idx].lockedByPIU?'warn':'info');
+  saveDB();
+  cloudSavePY(Number(db.pys[idx].refNum), db.pys[idx]);
+  renderPYList(); renderAllPY();
+  toast(db.pys[idx].lockedByPIU?'Locked':'Unlocked', db.pys[idx].lockedByPIU?'warn':'info');
 }
 function lockAll(lock){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
   var now=ts();
   db.sps.forEach(function(s){ s.lockedByPIU=lock; s.lockedBy=lock?cu.name:null; s.lockedAt=lock?now:null; });
   db.pys.forEach(function(p){ p.lockedByPIU=lock; p.lockedBy=lock?cu.name:null; });
-  saveDB(); renderSPList(); renderPYList(); renderAllSP(); renderAllPY();
-  toast(lock?'🔒 All records locked':'🔓 All records unlocked', lock?'warn':'info');
+  saveDB();
+  // Push all lock states to cloud
+  db.sps.forEach(function(s){ cloudSave('subprojects', s.id, s); });
+  db.pys.forEach(function(p){ cloudSavePY(Number(p.refNum), p); });
+  renderSPList(); renderPYList(); renderAllSP(); renderAllPY();
+  toast(lock?'All locked':'All unlocked', lock?'warn':'info');
 }
 
 // ═══════════════════════════════════════════
