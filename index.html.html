@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoGreen MIS</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Fraunces:wght@300;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g900:#0a2414;--g800:#0d3320;--g700:#1a5c38;--g600:#2a7a50;--g500:#2eb85c;--g400:#5fd18a;--g200:#c8f0d8;--g100:#f0faf4;
+  --amber:#f59e0b;--red:#ef4444;--blue:#3b82f6;
+  --ink:#1a2b1f;--muted:#5a7060;--border:#d4e8da;--bg:#f5f8f5;--surf:#fff;
+  --mono:'IBM Plex Mono',monospace;--display:'Fraunces',serif;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
+
+/* TOPBAR */
+.topbar{background:var(--g900);color:#fff;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.brand-pill{background:var(--g500);color:var(--g900);font-family:var(--display);font-weight:700;font-size:13px;padding:3px 10px;border-radius:20px}
+.brand-name{font-family:var(--display);font-size:15px;font-weight:600;color:#c8f0d8;margin-left:12px}
+.brand-sub{font-family:var(--mono);font-size:10px;color:#6da87e}
+.lang-toggle{display:flex;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+.lang-btn{background:none;border:none;color:#a0c8b0;font-size:11px;font-family:var(--mono);padding:5px 10px;cursor:pointer}
+.lang-btn.active{background:var(--g500);color:var(--g900);font-weight:600}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 12px;cursor:pointer;margin-left:12px}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--g500);color:var(--g900);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
+.user-nm{font-size:12px;color:#c8f0d8}
+.user-role{font-size:10px;color:#6da87e;font-family:var(--mono)}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 54px)}
+.sidebar{width:220px;background:var(--g800);flex-shrink:0;padding:20px 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto}
+.nav-sec{padding:0 12px;margin-bottom:8px}
+.nav-lbl{font-family:var(--mono);font-size:9px;color:#3a6050;text-transform:uppercase;letter-spacing:1px;padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:#90b8a0;font-size:13px;font-weight:500;transition:.15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#c8f0d8}
+.nav-item.active{background:var(--g500);color:var(--g900);font-weight:600}
+.nav-badge{margin-left:auto;background:rgba(46,184,92,.25);color:var(--g400);font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:10px}
+.main{flex:1;padding:28px 28px 60px;overflow-x:hidden;min-width:0}
+
+/* PAGES */
+.page{display:none}.page.active{display:block}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+.ph-title{font-family:var(--display);font-size:24px;font-weight:700;color:var(--g900)}
+.ph-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px}
+
+/* CARDS */
+.card{background:var(--surf);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.ch{background:var(--g800);color:#fff;padding:13px 20px;display:flex;align-items:center;justify-content:space-between}
+.ch h3{font-family:var(--display);font-size:14px;font-weight:600}
+.ch .tag{background:rgba(46,184,92,.2);color:var(--g400);font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:10px}
+.cb{padding:20px}
+
+/* STAT GRID */
+.sg{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+.sc{background:var(--surf);border:1.5px solid var(--border);border-radius:12px;padding:16px 18px}
+.sc-lbl{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.sc-val{font-family:var(--display);font-size:22px;font-weight:700;color:var(--g900);line-height:1}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+
+/* FORM */
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.fg2{grid-template-columns:repeat(2,1fr)}
+.fg4{grid-template-columns:repeat(4,1fr)}
+.c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+.field label .req{color:var(--red);margin-left:2px}
+.field label .autotag{background:var(--g200);color:var(--g700);font-size:8px;padding:1px 5px;border-radius:4px;margin-left:4px}
+.field input,.field select,.field textarea{border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--sans);font-size:13px;color:var(--ink);background:#fafdfb;outline:none;transition:.15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--g500);box-shadow:0 0 0 3px rgba(46,184,92,.1);background:#fff}
+.auto-inp{background:var(--g100)!important;border-color:var(--g200)!important;color:var(--muted)!important;font-family:var(--mono)!important;font-size:11px!important;cursor:not-allowed!important}
+.hint{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.sec-div{border:none;border-top:1.5px dashed var(--border);margin:18px 0}
+.sec-label{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--border)}
+
+/* RADIO */
+.rg{display:flex;gap:8px;flex-wrap:wrap}
+.ro{display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:12px;font-weight:500;transition:.15s;user-select:none}
+.ro:hover{border-color:var(--g500);background:var(--g100)}
+.ro.sel{background:var(--g700);color:#fff;border-color:var(--g700)}
+
+/* TIMELINE */
+.tl{display:flex;margin-bottom:24px}
+.tl-s{flex:1;position:relative;text-align:center}
+.tl-s:not(:last-child)::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:2px;background:var(--border);z-index:0}
+.tl-s.done::after{background:var(--g500)}
+.tl-dot{width:32px;height:32px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin:0 auto;position:relative;z-index:1;font-family:var(--mono);color:var(--muted);transition:.3s}
+.tl-s.done .tl-dot{background:var(--g500);color:var(--g900)}
+.tl-s.active .tl-dot{background:var(--g700);color:#fff;box-shadow:0 0 0 4px rgba(46,184,92,.2)}
+.tl-lbl{font-size:10px;font-family:var(--mono);color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.tl-s.done .tl-lbl,.tl-s.active .tl-lbl{color:var(--g700);font-weight:600}
+
+/* TABLE */
+.tw{border-radius:12px;overflow:hidden;border:1.5px solid var(--border)}
+.ttb{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;background:#f8fbf8;border-bottom:1.5px solid var(--border)}
+.srch{border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-family:var(--sans);font-size:13px;width:240px;outline:none}
+.srch:focus{border-color:var(--g500)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead{background:var(--g900)}
+thead th{color:#7ab898;font-family:var(--mono);font-size:9px;font-weight:500;padding:10px 14px;text-align:left;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px}
+tbody tr{border-bottom:1px solid #edf4ef;transition:.1s}
+tbody tr:hover{background:#f3faf5}
+tbody td{padding:9px 14px;vertical-align:middle}
+.idc{font-family:var(--mono);font-weight:700;color:var(--g700);font-size:12px}
+.tsc{font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:600;font-family:var(--mono);white-space:nowrap}
+.bg{background:#dcfce7;color:#15803d}
+.ba{background:#fef3c7;color:#b45309}
+.br{background:#fee2e2;color:#b91c1c}
+.bb{background:#dbeafe;color:#1d4ed8}
+.bp{background:#f3e8ff;color:#7c3aed}
+.bx{background:#f3f4f6;color:#6b7280}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:8px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn-p{background:var(--g500);color:var(--g900)}.btn-p:hover{background:var(--g400)}
+.btn-s{background:var(--border);color:var(--ink)}.btn-s:hover{background:#c4daca}
+.btn-d{background:#fee2e2;color:#b91c1c}.btn-d:hover{background:#fecaca}
+.btn-o{background:transparent;color:var(--g700);border:1.5px solid var(--border)}.btn-o:hover{background:var(--g100);border-color:var(--g500)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-xs{padding:4px 8px;font-size:10px}
+
+/* ACTION BAR */
+.ab{background:#f8fbf8;border-top:1.5px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.ab-r{display:flex;gap:10px}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--g900);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.2);display:flex;align-items:center;gap:10px;animation:slin .25s ease;min-width:240px}
+.toast.err{background:#991b1b}.toast.warn{background:#92400e}.toast.info{background:#1e40af}
+@keyframes slin{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:20px}
+.ov.open{display:flex}
+.modal{background:var(--surf);border-radius:16px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mh{background:var(--g800);color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0}
+.mh h2{font-family:var(--display);font-size:16px;font-weight:700}
+.mc{padding:22px}
+.mf{padding:14px 22px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:#f8fbf8;border-radius:0 0 14px 14px}
+.mx{background:rgba(255,255,255,.1);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.mx:hover{background:rgba(255,255,255,.2)}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,var(--g900),var(--g700));display:flex;align-items:center;justify-content:center;z-index:999}
+.login-box{background:#fff;border-radius:20px;padding:40px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{font-family:var(--display);font-size:32px;font-weight:700;color:var(--g900);margin-bottom:4px}
+.login-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:28px}
+.login-box .field{margin-bottom:14px}
+
+/* INDICATORS */
+.ind-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.ind-card{background:var(--surf);border:1.5px solid var(--border);border-radius:12px;padding:16px 18px}
+.ind-code{font-family:var(--mono);font-size:9px;color:var(--g500);font-weight:700;margin-bottom:4px}
+.ind-title{font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.4}
+.ind-desc{font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:10px;line-height:1.5}
+.ind-val{font-family:var(--display);font-size:22px;font-weight:700;color:var(--g700)}
+.ind-bar-bg{background:#e8f4ec;border-radius:20px;height:6px;overflow:hidden;margin:8px 0 4px}
+.ind-bar{height:6px;border-radius:20px;background:var(--g500)}
+.ind-bar.warn{background:var(--amber)}.ind-bar.danger{background:var(--red)}
+.ind-nums{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+/* REPORT */
+.rt{width:100%;border-collapse:collapse;font-size:12px}
+.rt th{background:var(--g800);color:#7ab898;font-family:var(--mono);font-size:9px;padding:8px 12px;text-align:left;text-transform:uppercase;letter-spacing:.5px}
+.rt td{padding:8px 12px;border-bottom:1px solid #edf4ef}
+.rt tr:hover td{background:#f3faf5}
+.rt .tr-total td{font-weight:700;background:var(--g100);border-top:2px solid var(--g200)}
+.period-bar{display:flex;gap:8px;align-items:center;margin-bottom:20px;background:var(--surf);border:1.5px solid var(--border);border-radius:10px;padding:12px 16px;flex-wrap:wrap}
+.fsel{border:1.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:var(--sans);background:#fff;outline:none;cursor:pointer}
+.fsel:focus{border-color:var(--g500)}
+
+/* ALERT */
+.alert{border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px}
+.alert-r{background:#fee2e2;border:1.5px solid #fca5a5;color:#991b1b}
+.alert-a{background:#fef3c7;border:1.5px solid #fcd34d;color:#92400e}
+.alert-g{background:#dcfce7;border:1.5px solid #86efac;color:#15803d}
+
+/* LOCK */
+.lock-info{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty .ei{font-size:36px;margin-bottom:10px}
+.empty h3{font-family:var(--display);font-size:17px;color:var(--ink);margin-bottom:6px}
+
+@media(max-width:900px){.sg{grid-template-columns:repeat(2,1fr)}.sidebar{display:none}.fg{grid-template-columns:1fr}.c2,.c3,.c4{grid-column:span 1}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">SoGreen</div>
+    <div class="login-sub">M&E Management Information System · World Bank 9407-TR</div>
+    <div class="field"><label>Username</label><input type="text" id="li-u" placeholder="piu_admin or istka_uzman"></div>
+    <div class="field"><label>Password</label><input type="password" id="li-p" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:8px;padding:12px" onclick="doLogin()">🔐 Sign In</button>
+    <div style="margin-top:16px;background:var(--g100);border-radius:8px;padding:12px;font-size:11px;font-family:var(--mono);color:var(--muted);line-height:1.9">
+      <strong>Demo:</strong><br>
+      piu_admin / admin123 → PIU (full access)<br>
+      istka_uzman / da123 → DA (İSTKA)<br>
+      trakyaka_uzman / da123 → DA (TRAKYAKA)
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appShell" style="display:none">
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <span class="brand-pill">SoGreen</span>
+    <div style="margin-left:12px">
+      <div class="brand-name">M&E Information System</div>
+      <div class="brand-sub">World Bank Loan 9407-TR · MoIT-DGD PIU</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('tr')">TR</button>
+    </div>
+    <div class="user-chip" onclick="logout()">
+      <div class="user-av" id="uAv">P</div>
+      <div><div class="user-nm" id="uNm">User</div><div class="user-role" id="uRole">Role</div></div>
+      <span style="color:#4a7060;font-size:11px;margin-left:4px">↩</span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<div class="sidebar">
+  <div class="nav-sec">
+    <div class="nav-lbl">Overview</div>
+    <div class="nav-item active" onclick="nav('dashboard')" id="ni-dashboard"><span>🏠</span> Home</div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Data Entry</div>
+    <div class="nav-item" onclick="nav('subproject')" id="ni-subproject"><span>📋</span> Subproject Register <span class="nav-badge" id="nb-sp">0</span></div>
+    <div class="nav-item" onclick="nav('payment')" id="ni-payment"><span>💳</span> Payment Register <span class="nav-badge" id="nb-py">0</span></div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Monitoring</div>
+    <div class="nav-item" onclick="nav('indicators')" id="ni-indicators"><span>📊</span> Indicators</div>
+    <div class="nav-item" onclick="nav('reporting')" id="ni-reporting"><span>📈</span> Reporting</div>
+  </div>
+  <div class="nav-sec" id="adminNav" style="display:none">
+    <div class="nav-lbl">Admin</div>
+    <div class="nav-item" onclick="nav('users')" id="ni-users"><span>👥</span> Users</div>
+    <div class="nav-item" onclick="nav('alldata')" id="ni-alldata"><span>🗄️</span> All Data</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="ph">
+    <div><div class="ph-title" id="dash-title">Home</div><div class="ph-sub" id="dash-ts"></div></div>
+  </div>
+  <div id="dash-banner" style="display:none;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#991b1b;font-family:var(--mono);font-weight:600"></div>
+  <div class="sg">
+    <div class="sc"><div class="sc-lbl">Total Subprojects</div><div class="sc-val" id="s1">0</div><div class="sc-sub">All records</div></div>
+    <div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val" id="s2" style="color:var(--g500)">0</div><div class="sc-sub" id="s2s">0% rate</div></div>
+    <div class="sc"><div class="sc-lbl">Total Approved (TL)</div><div class="sc-val" id="s3">0</div><div class="sc-sub">Combined</div></div>
+    <div class="sc"><div class="sc-lbl">Payment Records</div><div class="sc-val" id="s4">0</div><div class="sc-sub" id="s4s">₺0 disbursed</div></div>
+    <div class="sc"><div class="sc-lbl">Baseline Employment</div><div class="sc-val" id="s5">0</div><div class="sc-sub">People</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Recent Subprojects</h3><button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#c8f0d8;border:none" onclick="nav('subproject')">View All →</button></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>ID</th><th>Year</th><th>DA</th><th>Province</th><th>Company</th><th>Component</th><th>Status</th><th>Approved (TL)</th><th>Timestamp</th><th>Actions</th></tr></thead>
+      <tbody id="dash-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- SUBPROJECT REGISTER -->
+<div class="page" id="page-subproject">
+  <div class="ph">
+    <div><div class="ph-title">Subproject Register</div><div class="ph-sub">Progressive entry — fields can be completed over time</div></div>
+    <button class="btn btn-p" onclick="newSP()">➕ New Entry</button>
+  </div>
+
+  <!-- FORM (hidden by default) -->
+  <div id="sp-form" style="display:none">
+    <div class="tl" id="sp-tl">
+      <div class="tl-s active" id="tls0"><div class="tl-dot">1</div><div class="tl-lbl">ID & Type</div></div>
+      <div class="tl-s" id="tls1"><div class="tl-dot">2</div><div class="tl-lbl">Beneficiary</div></div>
+      <div class="tl-s" id="tls2"><div class="tl-dot">3</div><div class="tl-lbl">Application</div></div>
+      <div class="tl-s" id="tls3"><div class="tl-dot">4</div><div class="tl-lbl">Contract</div></div>
+      <div class="tl-s" id="tls4"><div class="tl-dot">5</div><div class="tl-lbl">Baseline</div></div>
+      <div class="tl-s" id="tls5"><div class="tl-dot">6</div><div class="tl-lbl">Targets</div></div>
+      <div class="tl-s" id="tls6"><div class="tl-dot">7</div><div class="tl-lbl">Follow-Up</div></div>
+    </div>
+
+    <!-- Step 0: ID & Type of Support -->
+    <div class="card" id="sps0">
+      <div class="ch"><h3>🔍 Project Identification & Type of Support</h3><span class="tag">STEP 1/7</span></div>
+      <div class="cb">
+        <div class="fg" style="margin-bottom:16px">
+          <div class="field"><label>Reference / Project ID <span class="autotag">AUTO</span></label><input type="number" id="f-id" placeholder="Auto-assigned" min="1"><span class="hint">Leave blank to auto-assign</span></div>
+          <div class="field"><label>Call Year <span class="req">*</span></label>
+            <select id="f-yr"><option value="">— Select —</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option></select>
+          </div>
+          <div class="field"><label>Development Agency <span class="req">*</span></label><select id="f-da"><option value="">— Select —</option></select></div>
+          <div class="field"><label>Province <span class="req">*</span></label><select id="f-prov"><option value="">— Select —</option></select></div>
+          <div class="field"><label>District</label><input type="text" id="f-dist" placeholder="e.g. Bağcılar"></div>
+        </div>
+        <div class="sec-label">Type of Support <span class="req">*</span></div>
+        <div class="rg">
+          <div class="ro" data-n="component" data-v="Component 1A" onclick="selR(this)">1A — Loan</div>
+          <div class="ro" data-n="component" data-v="Component 1B-i" onclick="selR(this)">1B-i — Grant</div>
+          <div class="ro" data-n="component" data-v="Component 1B-ii" onclick="selR(this)">1B-ii — Grant+</div>
+        </div>
+      </div>
+      <div class="ab"><div><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">New Record</span></div><div class="ab-r"><button class="btn btn-s" onclick="cancelSP()">✕ Cancel</button><button class="btn btn-p" onclick="spNext(0)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 1: Beneficiary -->
+    <div class="card" id="sps1" style="display:none">
+      <div class="ch"><h3>👤 Beneficiary Information</h3><span class="tag">STEP 2/7</span></div>
+      <div class="cb">
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field c3"><label>Beneficiary Type <span class="req">*</span></label>
+            <div class="rg">
+              <div class="ro" data-n="benType" data-v="SME" onclick="selR(this)">SME</div>
+              <div class="ro" data-n="benType" data-v="Micro Enterprise" onclick="selR(this)">Micro Enterprise</div>
+              <div class="ro" data-n="benType" data-v="Large" onclick="selR(this)">Large</div>
+              <div class="ro" data-n="benType" data-v="Cooperative" onclick="selR(this)">Cooperative</div>
+            </div>
+          </div>
+          <div class="field c2"><label>Company Name <span class="req">*</span></label><input type="text" id="f-co" placeholder="Legal company name"></div>
+          <div class="field"><label>Applicant Name <span class="req">*</span></label><input type="text" id="f-ap" placeholder="Full name"></div>
+          <div class="field"><label>Gender</label>
+            <div class="rg">
+              <div class="ro" data-n="gender" data-v="Male" onclick="selR(this)">♂ Male</div>
+              <div class="ro" data-n="gender" data-v="Female" onclick="selR(this)">♀ Female</div>
+            </div>
+          </div>
+          <div class="field"><label>Age</label><input type="number" id="f-age" placeholder="e.g. 32" min="18" max="99" oninput="calcAge()"></div>
+          <div class="field"><label>Age Band <span class="autotag">AUTO</span></label><input type="text" id="f-ageband" class="auto-inp" readonly></div>
+          <div class="field"><label>Woman-Led Enterprise <span class="req">*</span></label>
+            <div class="rg">
+              <div class="ro" data-n="womanLed" data-v="Yes" onclick="selR(this)">Yes</div>
+              <div class="ro" data-n="womanLed" data-v="No" onclick="selR(this)">No</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(1)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="spNext(1)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 2: Application -->
+    <div class="card" id="sps2" style="display:none">
+      <div class="ch"><h3>📋 Application Details</h3><span class="tag">STEP 3/7</span></div>
+      <div class="cb">
+        <div class="fg">
+          <div class="field c2"><label>NACE Section <span class="req">*</span></label><select id="f-nace"><option value="">— Select —</option></select></div>
+          <div class="field"><label>Application Date</label><input type="date" id="f-appdate"></div>
+          <div class="field"><label>Requested Amount (TL)</label><input type="text" inputmode="numeric" id="f-req" placeholder="0" oninput="fmtM(this);calcTotal()"></div>
+          <div class="field" id="co-fi-wrap"><label>Co-Financing (TL) <span style="font-size:9px;color:var(--muted)">(1B only)</span></label><input type="text" inputmode="numeric" id="f-cofi" placeholder="0" oninput="fmtM(this);calcTotal()"></div>
+          <div class="field"><label>Total Investment (TL) <span class="autotag">AUTO</span></label><input type="text" id="f-total" class="auto-inp" readonly></div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(2)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="spNext(2)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 3: Contract -->
+    <div class="card" id="sps3" style="display:none">
+      <div class="ch"><h3>📝 Contract Details</h3><span class="tag">STEP 4/7</span></div>
+      <div class="cb">
+        <div class="fg">
+          <div class="field"><label>Selection Status</label><select id="f-status"><option value="">— Select —</option><option>Approved</option><option>Pending</option><option>Rejected</option><option>On Hold</option></select></div>
+          <div class="field"><label>Approved Amount (TL)</label><input type="text" inputmode="numeric" id="f-app" placeholder="0" oninput="fmtM(this)"></div>
+          <div class="field"><label>Contract Signed?</label>
+            <div class="rg">
+              <div class="ro" data-n="contractSigned" data-v="Yes" onclick="selR(this);showContractDate(true)">Yes</div>
+              <div class="ro" data-n="contractSigned" data-v="No" onclick="selR(this);showContractDate(false)">No</div>
+            </div>
+          </div>
+          <div class="field" id="f-cdate-wrap" style="opacity:.4;pointer-events:none"><label>Contract Date <span style="font-size:9px;color:var(--amber)">(requires Signed=Yes)</span></label><input type="date" id="f-cdate" oninput="autoSet6mDate()"></div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(3)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="spNext(3)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 4: Baseline -->
+    <div class="card" id="sps4" style="display:none">
+      <div class="ch"><h3>📊 Baseline Employment</h3><span class="tag">STEP 5/7</span></div>
+      <div class="cb">
+        <div class="fg fg2" style="margin-bottom:14px">
+          <div class="field"><label>Baseline Measurement Date</label><input type="date" id="f-bdate"></div>
+          <div class="field"><label>Baseline Total <span class="autotag">AUTO</span></label><input type="text" id="f-btot" class="auto-inp" readonly placeholder="Sum below"></div>
+        </div>
+        <div class="fg fg4">
+          <div class="field"><label>Women 18–35</label><input type="number" id="f-bw1" placeholder="0" min="0" oninput="calcBase()"></div>
+          <div class="field"><label>Women 35+</label><input type="number" id="f-bw2" placeholder="0" min="0" oninput="calcBase()"></div>
+          <div class="field"><label>Men 18–35</label><input type="number" id="f-bm1" placeholder="0" min="0" oninput="calcBase()"></div>
+          <div class="field"><label>Men 35+</label><input type="number" id="f-bm2" placeholder="0" min="0" oninput="calcBase()"></div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(4)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="spNext(4)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 5: Targets -->
+    <div class="card" id="sps5" style="display:none">
+      <div class="ch"><h3>🎯 Committed Employment Targets</h3><span class="tag">STEP 6/7</span></div>
+      <div class="cb">
+        <div class="fg fg2" style="margin-bottom:14px">
+          <div class="field"><label>Committed Total <span class="autotag">AUTO</span></label><input type="text" id="f-ctot" class="auto-inp" readonly placeholder="Sum below"></div>
+        </div>
+        <div class="fg fg4">
+          <div class="field"><label>Women 18–35</label><input type="number" id="f-cw1" placeholder="0" min="0" oninput="calcCom()"></div>
+          <div class="field"><label>Women 35+</label><input type="number" id="f-cw2" placeholder="0" min="0" oninput="calcCom()"></div>
+          <div class="field"><label>Men 18–35</label><input type="number" id="f-cm1" placeholder="0" min="0" oninput="calcCom()"></div>
+          <div class="field"><label>Men 35+</label><input type="number" id="f-cm2" placeholder="0" min="0" oninput="calcCom()"></div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(5)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="spNext(5)">Next →</button></div></div>
+    </div>
+
+    <!-- Step 6: Follow-Up -->
+    <div class="card" id="sps6" style="display:none">
+      <div class="ch"><h3>🔄 Follow-Up & Current Status</h3><span class="tag">STEP 7/7</span></div>
+      <div class="cb">
+        <div class="fg fg2" style="margin-bottom:14px">
+          <div class="field"><label>Active After 6 Months?</label>
+            <div class="rg"><div class="ro" data-n="active6m" data-v="Yes" onclick="selR(this)">Yes</div><div class="ro" data-n="active6m" data-v="No" onclick="selR(this)">No</div></div>
+          </div>
+          <div class="field"><label>6-Month Control Date</label><input type="date" id="f-ctrl6"></div>
+          <div class="field"><label>Current Total <span class="autotag">AUTO</span></label><input type="text" id="f-curtot" class="auto-inp" readonly placeholder="Sum below"></div>
+          <div class="field"><label>Update Source</label><select id="f-src"><option value="">— Select —</option><option>Spot Check</option><option>Site Visit</option><option>Self-Report</option><option>DA Report</option></select></div>
+        </div>
+        <div class="fg fg4" style="margin-bottom:14px">
+          <div class="field"><label>Current Women 18–35</label><input type="number" id="f-curw1" placeholder="0" min="0" oninput="calcCur()"></div>
+          <div class="field"><label>Current Women 35+</label><input type="number" id="f-curw2" placeholder="0" min="0" oninput="calcCur()"></div>
+          <div class="field"><label>Current Men 18–35</label><input type="number" id="f-curm1" placeholder="0" min="0" oninput="calcCur()"></div>
+          <div class="field"><label>Current Men 35+</label><input type="number" id="f-curm2" placeholder="0" min="0" oninput="calcCur()"></div>
+        </div>
+        <div id="emp-warn" class="alert alert-r" style="display:none"></div>
+        <hr class="sec-div">
+        <div class="fg fg2">
+          <div class="field"><label>New Employment Created?</label>
+            <div class="rg"><div class="ro" data-n="newEmp" data-v="Yes" onclick="selR(this)">Yes</div><div class="ro" data-n="newEmp" data-v="No" onclick="selR(this)">No</div></div>
+          </div>
+          <div class="field"><label>Last Update Date</label><input type="date" id="f-lupd"></div>
+        </div>
+      </div>
+      <div class="ab"><button class="btn btn-s" onclick="spPrev(6)">← Back</button><div class="ab-r"><button class="btn btn-o" onclick="saveDraft()">💾 Save Draft</button><button class="btn btn-p" onclick="saveSP()">✅ Save Record</button></div></div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="sp-list">
+    <div class="tw">
+      <div class="ttb">
+        <input class="srch" type="text" placeholder="🔍 Search..." oninput="filterSP(this)">
+        <div style="display:flex;gap:8px">
+          <select class="fsel" id="f-filterDA" onchange="filterSP()"><option value="">All DAs</option></select>
+          <select class="fsel" id="f-filterSt" onchange="filterSP()"><option value="">All Statuses</option><option>Approved</option><option>Pending</option><option>Rejected</option><option>On Hold</option><option>Draft</option></select>
+          <button class="btn btn-sm btn-o" onclick="exportCSV('sp')">📥 CSV</button>
+          <button class="btn btn-sm btn-o" onclick="exportXLSX()">📊 Excel</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th>ID</th><th>Year</th><th>DA</th><th>Province</th><th>Company</th><th>Component</th><th>Status</th><th>Approved (TL)</th><th>Base Emp</th><th>Net Δ</th><th>Timestamp</th><th>Actions</th></tr></thead>
+        <tbody id="sp-tbody"></tbody></table>
+      </div>
+      <div style="padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--muted);border-top:1px solid var(--border)" id="sp-count">0 records</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT REGISTER -->
+<div class="page" id="page-payment">
+  <div class="ph">
+    <div><div class="ph-title">Payment Register</div><div class="ph-sub">Payment and repayment tracking</div></div>
+    <button class="btn btn-p" onclick="newPY()">➕ New Payment</button>
+  </div>
+
+  <div id="py-form" style="display:none">
+    <div class="card">
+      <div class="ch"><h3>🔗 Project Link</h3><span class="tag">REF → AUTO-FILL</span></div>
+      <div class="cb">
+        <div class="fg">
+          <div class="field"><label>Reference Number <span class="req">*</span></label><input type="number" id="p-ref" placeholder="Subproject ID" oninput="autoFillPY()"><span class="hint">Links to Subproject Register</span></div>
+          <div class="field"><label>Development Agency</label><input type="text" id="p-da" class="auto-inp" readonly></div>
+          <div class="field"><label>Beneficiary</label><input type="text" id="p-ben" class="auto-inp" readonly></div>
+          <div class="field"><label>Component</label><input type="text" id="p-comp" class="auto-inp" readonly></div>
+          <div class="field"><label>Approved Amount (TL)</label><input type="text" id="p-appr" class="auto-inp" readonly></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="py-prepay-card" style="display:none">
+      <div class="ch"><h3>💰 Prepayment <span style="font-size:11px;opacity:.7">(Component 1B only)</span></h3></div>
+      <div class="cb">
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field"><label>Prepayment %</label><input type="number" id="p-pct" placeholder="e.g. 30" min="0" max="100" oninput="calcPrepay()"></div>
+        <div class="field"><label>Total Prepayment (TL) <span style="font-family:var(--mono);font-size:8px;background:var(--g200);color:var(--g700);padding:1px 5px;border-radius:4px">AUTO</span></label><input type="text" id="p-prepay-total" class="auto-inp" readonly placeholder="Approved × %"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">1st Prepayment</div>
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-pr1a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-pr1p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-pr1d"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">2nd Prepayment</div>
+        <div class="fg">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-pr2a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-pr2p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-pr2d"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h3>🏦 Payments to Beneficiary</h3></div>
+      <div class="cb">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">1st Payment</div>
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-p1a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-p1p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-p1d"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">2nd Payment</div>
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-p2a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-p2p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-p2d"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">3rd / Final Payment</div>
+        <div class="fg">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-p3a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-p3p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-p3d"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="py-repay-card" style="display:none">
+      <div class="ch"><h3>🔁 Repayment <span style="font-size:11px;opacity:.7">(Component 1A only)</span></h3></div>
+      <div class="cb">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">1st Repayment</div>
+        <div class="fg" style="margin-bottom:14px">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-r1a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-r1p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-r1d"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;text-transform:uppercase">2nd Repayment</div>
+        <div class="fg">
+          <div class="field"><label>Amount (TL)</label><input type="text" inputmode="numeric" id="p-r2a" oninput="fmtM(this)" placeholder="0"></div>
+          <div class="field"><label>Paid?</label><select id="p-r2p"><option value="">—</option><option>Yes</option><option>No</option></select></div>
+          <div class="field"><label>Date</label><input type="date" id="p-r2d"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cb"><div class="field"><label>Notes</label><textarea id="p-notes" rows="2" placeholder="Any additional notes..."></textarea></div></div>
+      <div class="ab">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="py-ts">—</span>
+        <div class="ab-r"><button class="btn btn-s" onclick="cancelPY()">✕ Cancel</button><button class="btn btn-p" onclick="savePY()">💾 Save Payment</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="py-list">
+    <div class="tw">
+      <div class="ttb">
+        <input class="srch" type="text" placeholder="🔍 Search..." oninput="filterPY(this)">
+        <button class="btn btn-sm btn-o" onclick="exportCSV('py')">📥 CSV</button>
+        <button class="btn btn-sm btn-o" onclick="exportXLSX()">📊 Excel</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th>Ref#</th><th>DA</th><th>Beneficiary</th><th>Component</th><th>Approved (TL)</th><th>Disbursed (TL)</th><th>% Disb</th><th>Outstanding</th><th>Timestamp</th><th>Actions</th></tr></thead>
+        <tbody id="py-tbody"></tbody></table>
+      </div>
+      <div style="padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--muted);border-top:1px solid var(--border)" id="py-count">0 records</div>
+    </div>
+  </div>
+</div>
+
+<!-- INDICATORS -->
+<div class="page" id="page-indicators">
+  <div class="ph">
+    <div><div class="ph-title">Indicators Dashboard</div><div class="ph-sub">PDO and Intermediate Results — auto-calculated</div></div>
+    <select class="fsel" id="ind-da" onchange="renderInd()"><option value="ALL">All DAs</option></select>
+  </div>
+  <div class="card"><div class="ch"><h3>🎯 PDO Indicators</h3><span class="tag">AUTO</span></div><div class="cb"><div class="ind-grid" id="pdo-grid"></div></div></div>
+  <div class="card"><div class="ch"><h3>📌 Intermediate Results — Component 1</h3><span class="tag">AUTO</span></div><div class="cb"><div class="ind-grid" id="ir-grid"></div></div></div>
+</div>
+
+<!-- REPORTING -->
+<div class="page" id="page-reporting">
+  <div class="ph"><div><div class="ph-title">Reporting</div><div class="ph-sub">Quarterly periods and cumulative data</div></div></div>
+  <div class="period-bar">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">View:</span>
+    <select class="fsel" id="r-mode" onchange="renderRep()"><option value="cum">📊 Cumulative (All time)</option><option value="Q1">Q1 (Jan–Mar)</option><option value="Q2">Q2 (Apr–Jun)</option><option value="Q3">Q3 (Jul–Sep)</option><option value="Q4">Q4 (Oct–Dec)</option></select>
+    <select class="fsel" id="r-yr" onchange="renderRep()"><option value="all">All Years</option><option>2025</option><option>2026</option><option>2027</option></select>
+    <select class="fsel" id="r-da" onchange="renderRep()"><option value="ALL">All DAs</option></select>
+    <button class="btn btn-sm btn-o" onclick="exportCSV('report')">📥 CSV</button>
+    <button class="btn btn-sm btn-o" onclick="exportXLSX()">📊 Excel</button>
+    <div style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)" id="r-ts"></div>
+  </div>
+  <div id="rep-content"></div>
+</div>
+
+<!-- USERS (PIU only) -->
+<div class="page" id="page-users">
+  <div class="ph">
+    <div><div class="ph-title">User Management</div><div class="ph-sub">PIU Admin access required</div></div>
+    <button class="btn btn-p" onclick="openAddUser()">➕ Add User</button>
+  </div>
+  <div class="tw"><div style="overflow-x:auto"><table><thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>DA</th><th>Created</th><th>Actions</th></tr></thead><tbody id="u-tbody"></tbody></table></div></div>
+</div>
+
+<!-- ALL DATA (PIU only) -->
+<div class="page" id="page-alldata">
+  <div class="ph">
+    <div><div class="ph-title">All Data</div><div class="ph-sub" id="lock-summary">PIU Admin — full dataset view</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" style="background:#fef3c7;color:#b45309;border:none" onclick="lockAll(true)">🔒 Lock All</button>
+      <button class="btn btn-sm" style="background:#dbeafe;color:#1d4ed8;border:none" onclick="lockAll(false)">🔓 Unlock All</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <button class="btn btn-o btn-sm" onclick="switchDTab('sp')" id="dtab-sp" style="font-weight:700">Subprojects</button>
+    <button class="btn btn-o btn-sm" onclick="switchDTab('py')" id="dtab-py">Payments</button>
+  </div>
+  <div id="dt-sp">
+    <div class="tw">
+      <div class="ttb"><input class="srch" type="text" placeholder="🔍 Search..." oninput="filterAllSP(this)"><button class="btn btn-sm btn-o" onclick="exportCSV('sp')">📥 CSV</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Year</th><th>DA</th><th>Province</th><th>Company</th><th>Applicant</th><th>Component</th><th>Status</th><th>Approved</th><th>Base</th><th>Current</th><th>Net Δ</th><th>Timestamp</th><th>Actions</th></tr></thead><tbody id="dt-sp-tbody"></tbody></table></div>
+    </div>
+  </div>
+  <div id="dt-py" style="display:none">
+    <div class="tw">
+      <div class="ttb"><input class="srch" type="text" placeholder="🔍 Search..." oninput="filterAllPY(this)"><button class="btn btn-sm btn-o" onclick="exportCSV('py')">📥 CSV</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>Ref#</th><th>DA</th><th>Beneficiary</th><th>Component</th><th>Approved</th><th>Disbursed</th><th>% Disb</th><th>Outstanding</th><th>Timestamp</th><th>Actions</th></tr></thead><tbody id="dt-py-tbody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+</div><!-- /appShell -->
+
+<!-- MODALS -->
+<div class="ov" id="del-modal">
+  <div class="modal">
+    <div class="mh"><h2>⚠️ Confirm Delete</h2><button class="mx" onclick="closeM('del-modal')">✕</button></div>
+    <div class="mc"><p style="font-size:14px;line-height:1.6">Delete <strong id="del-target"></strong>? This cannot be undone.</p></div>
+    <div class="mf"><button class="btn btn-s" onclick="closeM('del-modal')">Cancel</button><button class="btn btn-d" onclick="confirmDel()">🗑 Delete</button></div>
+  </div>
+</div>
+<div class="ov" id="user-modal">
+  <div class="modal">
+    <div class="mh"><h2>👤 Add User</h2><button class="mx" onclick="closeM('user-modal')">✕</button></div>
+    <div class="mc">
+      <div class="fg fg2" style="gap:12px">
+        <div class="field c2"><label>Username</label><input type="text" id="nu-u" placeholder="e.g. istka_uzman2"></div>
+        <div class="field c2"><label>Full Name</label><input type="text" id="nu-n" placeholder="Full name"></div>
+        <div class="field"><label>Password</label><input type="password" id="nu-p"></div>
+        <div class="field"><label>Role</label><select id="nu-r"><option value="da">DA Specialist</option><option value="piu">PIU Admin</option></select></div>
+        <div class="field c2"><label>Development Agency (DA role)</label><select id="nu-da"><option value="">— Select —</option></select></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-s" onclick="closeM('user-modal')">Cancel</button><button class="btn btn-p" onclick="addUser()">➕ Add</button></div>
+  </div>
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function ts(){ return new Date().toISOString(); }
+function fmtTs(iso){ if(!iso) return '—'; var d=new Date(iso); return d.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtNum(n){ if(!n && n!==0) return '—'; return Number(n).toLocaleString('tr-TR'); }
+function fmtMil(n){ if(!n && n!==0) return '—'; return (Number(n)/1e6).toFixed(1)+'M'; }
+function parseM(id){ var el=document.getElementById(id); if(!el) return 0; return parseFloat((el.dataset.raw||el.value||'').toString().replace(/[^0-9.]/g,''))||0; }
+function fmtM(el){ var raw=el.value.replace(/[^0-9]/g,''); if(!raw){el.dataset.raw='0';return;} el.dataset.raw=raw; el.value=Number(raw).toLocaleString('tr-TR'); }
+function $$(id){ return document.getElementById(id); }
+function getQ(d){ if(!d) return null; var m=new Date(d).getMonth()+1; return m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4'; }
+function daAbbr(da){ if(!da) return '—'; var m=da.match(/\(([^)]+)\)/); return m?m[1]:da.substring(0,10)+'…'; }
+function spCode(s){
+  // Format: {num}_{DA_ABBR}_{PROV3}  e.g. 1_ISTKA_IST
+  if(!s) return '';
+  var num=s.id||'?';
+  var da=daAbbr(s.da)||'';
+  var prov=(s.province||'').substring(0,3).toUpperCase().replace('İ','I').replace('Ş','S').replace('Ç','C').replace('Ğ','G').replace('Ü','U').replace('Ö','O');
+  return num+'_'+da+'_'+prov;
+}
+
+// ═══════════════════════════════════════════
+// RADIO BUTTONS
+// ═══════════════════════════════════════════
+function selR(el){
+  var n=el.dataset.n, v=el.dataset.v;
+  document.querySelectorAll('.ro[data-n="'+n+'"]').forEach(function(r){ r.classList.toggle('sel', r===el); });
+  if(n==='component'){ toggleCoFi(v); }
+  if(n==='contractSigned'){ showContractDate(v==='Yes'); }
+}
+function getR(name){ var el=document.querySelector('.ro[data-n="'+name+'"].sel'); return el?el.dataset.v:''; }
+function setR(name, val){ document.querySelectorAll('.ro[data-n="'+name+'"]').forEach(function(el){ el.classList.toggle('sel', el.dataset.v===val); }); }
+function clearRAll(){ document.querySelectorAll('.ro').forEach(function(el){ el.classList.remove('sel'); }); }
+
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+var SUPA_URL = "https://fdvtukcamwuewwpcquka.supabase.co";
+var SUPA_KEY = "sb_publishable_U2tLL_96U7jt-BPn7ByAVQ_RRKkevt_";
+var supa = null;
+
+function initSupa(){
+  if(supa) return; // already initialized
+  try{ supa = window.supabase.createClient(SUPA_URL, SUPA_KEY); console.log('Supabase OK'); }
+  catch(e){ console.warn('Supabase failed:', e); }
+}
+
+async function cloudSave(table, id, data){
+  if(!supa) return;
+  try{
+    var row = {id: id, data: data, updated_at: new Date().toISOString()};
+    var result = await supa.from(table).upsert(row, {onConflict: 'id'});
+    if(result.error) console.warn('cloudSave error:', result.error);
+  } catch(e){ console.warn('cloudSave error:', e); }
+}
+
+async function cloudSavePY(refNum, data){
+  if(!supa) return;
+  try{
+    // Use refNum as the record identifier
+    var existing = await supa.from('payments').select('id').eq('ref_num', refNum).maybeSingle();
+    var row = {ref_num: refNum, data: data, updated_at: new Date().toISOString()};
+    if(existing.data && existing.data.id){
+      await supa.from('payments').update(row).eq('id', existing.data.id);
+    } else {
+      await supa.from('payments').insert(row);
+    }
+  } catch(e){ console.warn('cloudSavePY error:', e); }
+}
+
+async function cloudDelete(table, id){
+  if(!supa) return;
+  try{ await supa.from(table).delete().eq('id', id); }
+  catch(e){ console.warn('cloudDelete error:', e); }
+}
+
+async function syncFromCloud(){
+  if(!supa) return false;
+  try{
+    var r1 = await supa.from('subprojects').select('*').order('id');
+    var r2 = await supa.from('payments').select('*').order('id');
+    var r3 = await supa.from('users').select('username, data');
+    if(r1.error) throw r1.error;
+    if(r2.error) throw r2.error;
+    if(r3.error) throw r3.error;
+    db.sps = r1.data.map(function(r){ return r.data; });
+    db.pys = r2.data.map(function(r){ 
+      var d=r.data; 
+      if(!d.refNum) d.refNum=r.ref_num; 
+      return d; 
+    });
+    if(r3.data.length > 0){
+      db.users = r3.data.map(function(r){ return r.data; });
+    }
+    saveLocalOnly();
+    migrateStatus();
+    // Update nav badges
+    var nbSP=$$('nb-sp'); if(nbSP) nbSP.textContent=myData(db.sps).length;
+    var nbPY=$$('nb-py'); if(nbPY) nbPY.textContent=myData(db.pys).length;
+    return true;
+  } catch(e){
+    console.warn('syncFromCloud error:', e);
+    console.warn('Cloud sync failed, using local');
+    return false;
+  }
+}
+
+function doSync(){ syncFromCloud().then(function(){ renderDash(); toast('Synced!'); }); }
+
+async function pushAllToCloud(){
+  if(!supa) return;
+  try{
+    toast('Pushing all data to cloud...', 'info');
+    for(var i=0; i<db.sps.length; i++){
+      await cloudSave('subprojects', db.sps[i].id, db.sps[i]);
+    }
+    for(var j=0; j<db.pys.length; j++){
+      await cloudSavePY(j+1, db.pys[j]);
+    }
+    for(var k=0; k<db.users.length; k++){
+      if(!supa) break;
+      await supa.from('users').upsert({username: db.users[k].u, data: db.users[k]}, {onConflict: 'username'});
+    }
+    toast('All data pushed to cloud!');
+  } catch(e){
+    console.warn('pushAllToCloud error:', e);
+    toast('Push failed: '+e.message, 'err');
+  }
+}
+
+var db = {
+  sps: JSON.parse(localStorage.getItem('sg_sps')||'[]'),
+  pys: JSON.parse(localStorage.getItem('sg_pys')||'[]'),
+  users: JSON.parse(localStorage.getItem('sg_users')||JSON.stringify([
+    {u:'piu_admin',p:'admin123',name:'PIU Admin',role:'piu',da:'ALL',created:'2025-01-01T00:00:00.000Z'},
+    {u:'istka_uzman',p:'da123',name:'İSTKA Uzmanı',role:'da',da:'(İSTKA) İstanbul Kalkınma Ajansı',created:'2025-01-01T00:00:00.000Z'},
+    {u:'trakyaka_uzman',p:'da123',name:'TRAKYAKA Uzmanı',role:'da',da:'(TRAKYAKA) Trakya Kalkınma Ajansı',created:'2025-01-01T00:00:00.000Z'}
+  ]))
+};
+var cu = null; // current user
+var editSpIdx = null;
+var editPyIdx = null;
+var delPending = null;
+var spStep = 0;
+var lang = 'en';
+
+function saveLocalOnly(){
+  localStorage.setItem('sg_sps', JSON.stringify(db.sps));
+  localStorage.setItem('sg_pys', JSON.stringify(db.pys));
+  localStorage.setItem('sg_users', JSON.stringify(db.users));
+}
+function saveDB(){
+  saveLocalOnly();
+  // Cloud sync handled separately per record
+}
+
+// Fix old status on load
+function migrateStatus(){
+  db.sps.forEach(function(s,i){
+    if((!s.status||s.status==='Draft') && parseFloat(s.approvedAmount)>0){
+      db.sps[i].status='Approved';
+    }
+  });
+  saveDB();
+}
+
+// ═══════════════════════════════════════════
+// REFERENCE DATA
+// ═══════════════════════════════════════════
+var DAS=['(İSTKA) İstanbul Kalkınma Ajansı','(TRAKYAKA) Trakya Kalkınma Ajansı','(GMKA) Güney Marmara Kalkınma Ajansı','(İZKA) İzmir Kalkınma Ajansı','(GEKA) Güney Ege Kalkınma Ajansı','(BGEKA) Batı Akdeniz Kalkınma Ajansı','(DOĞAKA) Doğu Akdeniz Kalkınma Ajansı','(BAKA) Batı Karadeniz Kalkınma Ajansı','(OKA) Orta Karadeniz Kalkınma Ajansı','(DOKA) Doğu Karadeniz Kalkınma Ajansı','(KUDAKA) Kuzeydoğu Anadolu Kalkınma Ajansı','(KARACADAĞ) Karacadağ Kalkınma Ajansı','(GAP) Güneydoğu Anadolu Kalkınma Ajansı','(DIKA) Dicle Kalkınma Ajansı','(SERKA) Serhat Kalkınma Ajansı','(MARKA) Marka Kalkınma Ajansı','(ÇAKA) Çukurova Kalkınma Ajansı','(BEBKA) Bilecik Eskişehir Kütahya Kalkınma Ajansı','(İNKA) İç Anadolu Kalkınma Ajansı','(ORAN) Orta Anadolu Kalkınma Ajansı','(FKA) Fırat Kalkınma Ajansı','(DAKA) Doğu Anadolu Kalkınma Ajansı','(AHIKA) Ahiler Kalkınma Ajansı','(TRC1KA) Orta Anadolu Kalkınma Ajansı','(BEBKA) Bilecik Eskişehir Kalkınma Ajansı'];
+var PROVS=['Adana','Adıyaman','Afyonkarahisar','Ağrı','Aksaray','Amasya','Ankara','Antalya','Ardahan','Artvin','Aydın','Balıkesir','Bartın','Batman','Bayburt','Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli','Diyarbakır','Düzce','Edirne','Elazığ','Erzincan','Erzurum','Eskişehir','Gaziantep','Giresun','Gümüşhane','Hakkari','Hatay','Iğdır','Isparta','İstanbul','İzmir','Kahramanmaraş','Karabük','Karaman','Kars','Kastamonu','Kayseri','Kırıkkale','Kırklareli','Kırşehir','Kilis','Kocaeli','Konya','Kütahya','Malatya','Manisa','Mardin','Mersin','Muğla','Muş','Nevşehir','Niğde','Ordu','Osmaniye','Rize','Sakarya','Samsun','Şanlıurfa','Siirt','Sinop','Şırnak','Sivas','Tekirdağ','Tokat','Trabzon','Tunceli','Uşak','Van','Yalova','Yozgat','Zonguldak'];
+var NACE=['A – Agriculture, Forestry and Fishing','B – Mining and Quarrying','C – Manufacturing','D – Electricity, Gas, Steam and Air Conditioning Supply','E – Water Supply; Sewerage, Waste Management and Remediation','F – Construction','G – Wholesale and Retail Trade; Repair of Motor Vehicles','H – Transportation and Storage','I – Accommodation and Food Service Activities','J – Information and Communication','K – Financial and Insurance Activities','L – Real Estate Activities','M – Professional, Scientific and Technical Activities','N – Administrative and Support Service Activities','O – Public Administration and Defence','P – Education','Q – Human Health and Social Work Activities','R – Arts, Entertainment and Recreation','S – Other Service Activities','T – Activities of Households as Employers','U – Activities of Extraterritorial Organisations'];
+
+function populateSelects(){
+  var daEls=['f-da','f-filterDA','ind-da','r-da','nu-da'];
+  daEls.forEach(function(id){
+    var el=$$(id); if(!el) return;
+    var needAll=id!=='f-da'&&id!=='nu-da';
+    if(needAll && !el.querySelector('option[value="ALL"]')) el.add(new Option('All DAs','ALL'));
+    DAS.forEach(function(da){ if(!el.querySelector('option[value="'+da+'"]')) el.add(new Option(da,da)); });
+  });
+  var pEl=$$('f-prov'); if(pEl && pEl.options.length<2) PROVS.forEach(function(p){ pEl.add(new Option(p,p)); });
+  var nEl=$$('f-nace'); if(nEl && nEl.options.length<2) NACE.forEach(function(n){ nEl.add(new Option(n,n)); });
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+var _dashOriginalHTML = null; // will be set after DOM ready
+
+function restoreDashHTML(){
+  var main = $$('page-dashboard');
+  if(_dashOriginalHTML && main){
+    main.innerHTML = _dashOriginalHTML;
+  }
+}
+
+function doLogin(){
+  var u=$$('li-u').value.trim(), p=$$('li-p').value;
+  var user=db.users.find(function(x){ return x.u===u && x.p===p; });
+  if(!user){ toast('Invalid credentials','err'); return; }
+  cu=user;
+  $$('loginScreen').style.display='none';
+  $$('appShell').style.display='block';
+  $$('uAv').textContent=user.name.charAt(0).toUpperCase();
+  $$('uNm').textContent=user.name;
+  $$('uRole').textContent=user.role==='piu'?'PIU Admin':'DA Specialist';
+  if(user.role==='piu'){ $$('adminNav').style.display=''; }
+  if(user.role==='da'){
+    var daEl=$$('f-da'); if(daEl){ daEl.value=user.da; daEl.disabled=true; }
+  }
+  migrateStatus();
+  populateSelects();
+  // Sync from cloud then render
+  initSupa();
+  syncFromCloud().then(function(synced){
+    if(synced){ migrateStatus(); populateSelects(); }
+    nav('dashboard');
+  });
+}
+function logout(){
+  cu=null;
+  $$('loginScreen').style.display='flex';
+  $$('appShell').style.display='none';
+  $$('li-u').value=''; $$('li-p').value='';
+  $$('adminNav').style.display='none';
+  restoreDashHTML();
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  $$('page-'+id).classList.add('active');
+  var ni=$$('ni-'+id); if(ni) ni.classList.add('active');
+  if(id==='dashboard') renderDash();
+  if(id==='subproject'){
+    $$('sp-form').style.display='none';
+    $$('sp-list').style.display='block';
+    editSpIdx=null;
+    if(supa){
+      syncFromCloud().then(function(){ renderSPList(); });
+    } else {
+      renderSPList();
+    }
+  }
+  if(id==='payment'){
+    if(supa){
+      syncFromCloud().then(function(){ renderPYList(); });
+    } else {
+      renderPYList();
+    }
+  }
+  if(id==='indicators') renderInd();
+  if(id==='reporting'){ populateRepDA(); renderRep(); }
+  if(id==='users') renderUsers();
+  if(id==='alldata'){ renderAllSP(); renderAllPY(); }
+}
+
+// ═══════════════════════════════════════════
+// LANGUAGE
+// ═══════════════════════════════════════════
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active', b.textContent===l.toUpperCase()); });
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg, type){
+  type=type||'ok';
+  var w=$$('toast-wrap');
+  var t=document.createElement('div');
+  t.className='toast'+(type==='err'?' err':type==='warn'?' warn':type==='info'?' info':'');
+  t.innerHTML=(type==='ok'?'✅':type==='err'?'❌':type==='warn'?'⚠️':'ℹ️')+' '+msg;
+  w.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+function closeM(id){ $$(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════════
+// MY DATA (role-based filter)
+// ═══════════════════════════════════════════
+function myData(arr){ if(!cu||cu.role==='piu') return arr; return arr.filter(function(r){ return r.da===cu.da; }); }
+
+// ═══════════════════════════════════════════
+// STATUS BADGE
+// ═══════════════════════════════════════════
+function sbadge(s){
+  var map={Approved:'bg',Pending:'ba',Rejected:'br','On Hold':'bb',Draft:'bx'};
+  return s?'<span class="badge '+(map[s]||'bx')+'">'+s+'</span>':'—';
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+function renderDash(){
+  if(cu && cu.role==='piu'){
+    renderPIUDash();
+    return;
+  }
+  // DA: restore original HTML before rendering
+  restoreDashHTML();
+  var sps=myData(db.sps), pys=myData(db.pys);
+  var appr=sps.filter(function(s){ return s.status==='Approved'; });
+  var totAppr=appr.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+  var totDisb=pys.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+  var baseEmp=sps.reduce(function(a,s){ return a+(parseInt(s.baseTotalEmp)||0); },0);
+  $$('s1').textContent=sps.length;
+  $$('s2').textContent=appr.length;
+  $$('s2s').textContent=(sps.length?Math.round(appr.length/sps.length*100):0)+'% rate';
+  $$('s3').textContent=fmtMil(totAppr);
+  $$('s4').textContent=pys.length;
+  $$('s4s').textContent='\u20ba'+fmtMil(totDisb)+' disbursed';
+  $$('s5').textContent=baseEmp;
+  $$('nb-sp').textContent=sps.length;
+  $$('nb-py').textContent=pys.length;
+  $$('dash-ts').textContent='Last refreshed: '+fmtTs(ts());
+  var locked=db.sps.filter(function(s){ return s.lockedByPIU===true; }).length;
+  var flagged=db.sps.filter(function(s){ var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0; return cm>0&&r>0&&r<cm; }).length;
+  var banner=$$('dash-banner');
+  var parts=[];
+  if(locked>0) parts.push('\uD83D\uDD12 '+locked+' record'+(locked>1?'s':'')+' locked');
+  if(flagged>0) parts.push('\u2691 '+flagged+' below committed target');
+  banner.style.display=parts.length?'block':'none';
+  banner.textContent=parts.join('  |  ');
+  var recent=sps.slice().sort(function(a,b){ return new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt); }).slice(0,5);
+  var tbody=$$('dash-tbody');
+  if(!recent.length){ tbody.innerHTML='<tr><td colspan="10"><div class="empty"><div class="ei">\uD83D\uDCCB</div><h3>No records yet</h3><p>Add your first subproject</p></div></td></tr>'; return; }
+  tbody.innerHTML=recent.map(function(s){
+    var idx=db.sps.indexOf(s);
+    var com=parseInt(s.comTotalEmp)||0, cur=parseInt(s.curTotalEmp)||0;
+    var sc=sbadge(s.status);
+    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">\uD83D\uDD12</span>';
+    if(com>0&&cur>0&&cur<com) sc+=' <span class="badge br" style="font-size:9px">\u2691</span>';
+    return '<tr>'
+      +'<td class="idc">'+spCode(s)+'</td>'
+      +'<td>'+(s.callYear||'\u2014')+'</td>'
+      +'<td title="'+(s.da||'')+'">'+daAbbr(s.da)+'</td>'
+      +'<td>'+(s.province||'\u2014')+'</td>'
+      +'<td>'+(s.company||'\u2014')+'</td>'
+      +'<td>'+(s.component||'\u2014')+'</td>'
+      +'<td>'+sc+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(s.approvedAmount?fmtNum(s.approvedAmount):'-')+'</td>'
+      +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
+      +'<td><button class="btn btn-xs btn-p" onclick="dashEdit('+idx+')">\u270F\uFE0F</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function renderPIUDash(){
+  var main=$$('page-dashboard');
+  // Sync first, then render
+  if(supa){
+    syncFromCloud().then(function(){ _renderPIUDashInner(); });
+    return;
+  }
+  _renderPIUDashInner();
+}
+function _renderPIUDashInner(){
+  var main=$$('page-dashboard');
+  var sps=db.sps, pys=db.pys;
+  var appr=sps.filter(function(s){ return s.status==='Approved'; });
+  var pending=sps.filter(function(s){ return s.status!=='Approved'; });
+  var flagged=sps.filter(function(s){ var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0; return cm>0&&r>0&&r<cm; });
+  var locked=sps.filter(function(s){ return s.lockedByPIU===true; });
+  var unlocked=appr.filter(function(s){ return !s.lockedByPIU; });
+  var totAppr=appr.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+  var totDisb=pys.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+  var daStats={};
+  sps.forEach(function(s){
+    var da=s.da||'Unknown';
+    if(!daStats[da]) daStats[da]={total:0,appr:0,locked:0,flagged:0,disb:0};
+    daStats[da].total++;
+    if(s.status==='Approved') daStats[da].appr++;
+    if(s.lockedByPIU) daStats[da].locked++;
+    var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0;
+    if(cm>0&&r>0&&r<cm) daStats[da].flagged++;
+  });
+  pys.forEach(function(p){
+    var da=p.da||'Unknown';
+    if(!daStats[da]) daStats[da]={total:0,appr:0,locked:0,flagged:0,disb:0};
+    daStats[da].disb+=parseFloat(p.totalDisbursed)||0;
+  });
+  var activeDAs=Object.keys(daStats).filter(function(da){ return daStats[da].total>0; });
+  var html='';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">';
+  html+='<div><div style="font-family:var(--display);font-size:24px;font-weight:700;color:var(--g900)">PIU Control Center</div>';
+  html+='<div style="font-family:var(--mono);font-size:11px;color:var(--muted)">World Bank 9407-TR &nbsp;|&nbsp; Last refreshed: '+fmtTs(ts())+'</div></div>';
+  html+='<div style="display:flex;gap:8px">';
+  html+='<button class="btn btn-sm" style="background:#fef3c7;color:#b45309;border:none" onclick="lockAll(true);renderDash()">Lock All</button>';
+  html+='<button class="btn btn-sm" style="background:#dbeafe;color:#1d4ed8;border:none" onclick="lockAll(false);renderDash()">Unlock All</button>';
+  html+='<button class="btn btn-sm" style="background:#dcfce7;color:#15803d;border:none" onclick="pushAllToCloud()">☁️ Push to Cloud</button>';
+  html+='<button class="btn btn-sm btn-o" onclick="doSync()">Sync</button>';
+  html+='</div></div>';
+  var alerts=[];
+  if(flagged.length>0) alerts.push('\u2691 '+flagged.length+' beneficiar'+(flagged.length>1?'ies':'y')+' below committed employment target');
+  if(unlocked.length>0) alerts.push('\uD83D\uDD13 '+unlocked.length+' approved record'+(unlocked.length>1?'s':'')+' not yet locked by PIU');
+  if(pending.length>0) alerts.push('\u23F3 '+pending.length+' record'+(pending.length>1?'s':'')+' pending review / draft');
+  if(alerts.length>0){
+    html+='<div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 18px;margin-bottom:20px;font-family:var(--mono);font-size:12px;color:#991b1b">';
+    html+=alerts.map(function(a){ return '<div style="margin-bottom:3px">'+a+'</div>'; }).join('');
+    html+='</div>';
+  }
+  html+='<div class="sg" style="margin-bottom:24px">';
+  html+='<div class="sc"><div class="sc-lbl">Total Subprojects</div><div class="sc-val">'+sps.length+'</div><div class="sc-sub">'+activeDAs.length+' active DAs</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val" style="color:var(--g500)">'+appr.length+'</div><div class="sc-sub">'+(sps.length?Math.round(appr.length/sps.length*100):0)+'% rate</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Total Approved (TL)</div><div class="sc-val">'+fmtMil(totAppr)+'</div><div class="sc-sub">'+fmtNum(totAppr)+' TL</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Disbursed (TL)</div><div class="sc-val">'+fmtMil(totDisb)+'</div><div class="sc-sub">'+(totAppr?Math.round(totDisb/totAppr*100):0)+'% of approved</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Locked / Flagged</div><div class="sc-val">'+locked.length+' <span style="font-size:14px;color:var(--red)">/ '+flagged.length+'</span></div><div class="sc-sub">locked / below target</div></div>';
+  html+='</div>';
+  if(flagged.length>0){
+    html+='<div class="card" style="margin-bottom:18px"><div class="ch" style="background:#991b1b"><h3>\u2691 Below Committed Target</h3><span class="tag" style="background:rgba(255,255,255,.15);color:#fff">'+flagged.length+' records</span></div>';
+    html+='<div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>DA</th><th>Company</th><th>Committed Emp</th><th>Realized Emp</th><th>Gap</th><th>Actions</th></tr></thead><tbody>';
+    html+=flagged.map(function(s){
+      var idx=db.sps.indexOf(s);
+      var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0;
+      return '<tr><td class="idc">'+spCode(s)+'</td><td>'+daAbbr(s.da)+'</td><td>'+s.company+'</td>'
+        +'<td style="font-weight:700">'+cm+'</td><td style="color:var(--red);font-weight:700">'+r+'</td>'
+        +'<td style="color:var(--red);font-weight:700">'+(r-cm)+'</td>'
+        +'<td><button class="btn btn-xs btn-o" onclick="dashEdit('+idx+')">\u270F\uFE0F</button></td></tr>';
+    }).join('');
+    html+='</tbody></table></div></div>';
+  }
+  if(pending.length>0){
+    html+='<div class="card" style="margin-bottom:18px"><div class="ch" style="background:#92400e"><h3>\u23F3 Pending Review</h3><span class="tag" style="background:rgba(255,255,255,.15);color:#fff">'+pending.length+' records</span></div>';
+    html+='<div style="overflow-x:auto"><table><thead><tr><th>Code</th><th>DA</th><th>Company</th><th>Component</th><th>Status</th><th>Last Update</th><th>Actions</th></tr></thead><tbody>';
+    html+=pending.map(function(s){
+      var idx=db.sps.indexOf(s);
+      return '<tr><td class="idc">'+spCode(s)+'</td><td>'+daAbbr(s.da)+'</td><td>'+(s.company||'\u2014')+'</td>'
+        +'<td>'+(s.component||'\u2014')+'</td><td>'+sbadge(s.status||'Draft')+'</td>'
+        +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
+        +'<td style="display:flex;gap:4px">'
+        +'<button class="btn btn-xs" style="background:#dcfce7;color:#15803d;border:none" onclick="approveRecord('+idx+')">&#x2705; Approve</button>'
+        +'<button class="btn btn-xs btn-o" onclick="dashEdit('+idx+')">\u270F\uFE0F</button>'
+        +'</td></tr>';
+    }).join('');
+    html+='</tbody></table></div></div>';
+  }
+  html+='<div class="card" style="margin-bottom:18px"><div class="ch"><h3>\uD83C\uDFDB\uFE0F DA Progress</h3><span class="tag">'+activeDAs.length+' active agencies</span></div><div style="padding:16px">';
+  if(activeDAs.length===0){
+    html+='<div class="empty"><div class="ei">\uD83C\uDFDB\uFE0F</div><h3>No DA data yet</h3><p>DAs will appear here once they submit records</p></div>';
+  } else {
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
+    activeDAs.forEach(function(da){
+      var v=daStats[da];
+      var pct=v.total?Math.round(v.appr/v.total*100):0;
+      var bc=pct===100?'var(--g500)':pct>=50?'var(--amber)':'var(--red)';
+      var daKey=da.replace(/'/g,'\\x27');
+      html+='<div style="background:#f8fbf8;border:1.5px solid var(--border);border-radius:10px;padding:14px">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html+='<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--g700)">'+daAbbr(da)+'</span>';
+      html+='<div style="display:flex;gap:4px">';
+      if(v.flagged>0) html+='<span class="badge br" style="font-size:9px">\u2691 '+v.flagged+'</span>';
+      html+='<span style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+v.locked+'/'+v.total+' \uD83D\uDD12</span>';
+      html+='</div></div>';
+      html+='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+da+'">'+da+'</div>';
+      html+='<div style="display:flex;gap:12px;font-family:var(--mono);font-size:11px;margin-bottom:10px">';
+      html+='<span>\uD83D\uDCCB <b>'+v.total+'</b></span> <span>&#x2705; <b>'+v.appr+'</b></span> <span>\uD83D\uDD12 <b>'+v.locked+'</b></span>';
+      html+='</div>';
+      html+='<div style="background:#e8f4ec;border-radius:20px;height:5px;overflow:hidden;margin-bottom:8px">';
+      html+='<div style="width:'+pct+'%;height:5px;border-radius:20px;background:'+bc+'"></div></div>';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      html+='<span style="font-family:var(--mono);font-size:9px;color:var(--muted)">'+pct+'% approved</span>';
+      html+='<div style="display:flex;gap:4px">';
+      html+='<button class="btn btn-xs" style="background:#fef3c7;color:#b45309;border:none;padding:2px 7px" onclick="lockDA(\''+daKey+'\')">\uD83D\uDD12</button>';
+      html+='<button class="btn btn-xs" style="background:#dbeafe;color:#1d4ed8;border:none;padding:2px 7px" onclick="unlockDA(\''+daKey+'\')">\uD83D\uDD13</button>';
+      html+='</div></div></div>';
+    });
+    html+='</div>';
+  }
+  html+='</div></div>';
+  html+='<div class="card"><div class="ch"><h3>\uD83D\uDCCB All Records</h3>';
+  html+='<div style="display:flex;gap:8px">';
+  html+='<button class="btn btn-xs" style="background:#dcfce7;color:#15803d;border:none" onclick="bulkApprove()">&#x2705; Approve Selected</button>';
+  html+='<button class="btn btn-xs" style="background:#fef3c7;color:#b45309;border:none" onclick="bulkLock(true)">\uD83D\uDD12 Lock</button>';
+  html+='<button class="btn btn-xs" style="background:#dbeafe;color:#1d4ed8;border:none" onclick="bulkLock(false)">\uD83D\uDD13 Unlock</button>';
+  html+='</div></div>';
+  html+='<div style="overflow-x:auto"><table><thead><tr>';
+  html+='<th><input type="checkbox" id="chk-all" onchange="toggleAllChk(this)"></th>';
+  html+='<th>Code</th><th>DA</th><th>Company</th><th>Component</th><th>Status</th><th>Approved (TL)</th><th>Lock</th><th>Updated</th><th>Actions</th></tr></thead><tbody>';
+  html+=sps.map(function(s){
+    var idx=db.sps.indexOf(s);
+    var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0;
+    var sc=sbadge(s.status);
+    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">\uD83D\uDD12</span>';
+    if(cm>0&&r>0&&r<cm) sc+=' <span class="badge br" style="font-size:9px">\u2691</span>';
+    var es=s.lockedByPIU?'opacity:0.35;cursor:not-allowed':'';
+    return '<tr>'
+      +'<td><input type="checkbox" class="row-chk" data-idx="'+idx+'"></td>'
+      +'<td class="idc">'+spCode(s)+'</td>'
+      +'<td>'+daAbbr(s.da)+'</td>'
+      +'<td>'+(s.company||'\u2014')+'</td>'
+      +'<td>'+(s.component||'\u2014')+'</td>'
+      +'<td>'+sc+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(s.approvedAmount?fmtNum(s.approvedAmount):'-')+'</td>'
+      +'<td><button class="btn btn-xs" style="background:'+(s.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockSP('+idx+');renderDash()">'+(s.lockedByPIU?'\uD83D\uDD12':'\uD83D\uDD13')+'</button></td>'
+      +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
+      +'<td style="display:flex;gap:4px">'
+      +(s.status!=='Approved'?'<button class="btn btn-xs" style="background:#dcfce7;color:#15803d;border:none" onclick="approveRecord('+idx+')">&#x2705;</button>':'')
+      +'<button class="btn btn-xs btn-o" style="'+es+'" onclick="dashEdit('+idx+')">\u270F\uFE0F</button>'
+      +'</td></tr>';
+  }).join('');
+  html+='</tbody></table></div></div>';
+  main.innerHTML=html;
+}
+
+function approveRecord(idx){
+  db.sps[idx].status='Approved'; db.sps[idx].updatedAt=ts();
+  saveDB(); renderDash(); toast('Record approved!');
+}
+function lockDA(da){
+  if(!cu||cu.role!=='piu') return;
+  var now=ts();
+  db.sps.forEach(function(s){ if(s.da===da){ s.lockedByPIU=true; s.lockedBy=cu.name; s.lockedAt=now; } });
+  db.pys.forEach(function(p){ if(p.da===da){ p.lockedByPIU=true; p.lockedBy=cu.name; } });
+  saveDB(); renderDash(); toast('\uD83D\uDD12 '+daAbbr(da)+' locked','warn');
+}
+function unlockDA(da){
+  if(!cu||cu.role!=='piu') return;
+  db.sps.forEach(function(s){ if(s.da===da){ s.lockedByPIU=false; s.lockedBy=null; s.lockedAt=null; } });
+  db.pys.forEach(function(p){ if(p.da===da){ p.lockedByPIU=false; p.lockedBy=null; } });
+  saveDB(); renderDash(); toast('\uD83D\uDD13 '+daAbbr(da)+' unlocked','info');
+}
+function toggleAllChk(cb){ document.querySelectorAll('.row-chk').forEach(function(c){ c.checked=cb.checked; }); }
+function getCheckedIdx(){ var idxs=[]; document.querySelectorAll('.row-chk:checked').forEach(function(c){ idxs.push(parseInt(c.dataset.idx)); }); return idxs; }
+function bulkApprove(){
+  var idxs=getCheckedIdx(); if(!idxs.length){ toast('No records selected','warn'); return; }
+  var now=ts(); idxs.forEach(function(i){ db.sps[i].status='Approved'; db.sps[i].updatedAt=now; });
+  saveDB(); renderDash(); toast('&#x2705; '+idxs.length+' records approved');
+}
+function bulkLock(lock){
+  var idxs=getCheckedIdx(); if(!idxs.length){ toast('No records selected','warn'); return; }
+  var now=ts(); idxs.forEach(function(i){ db.sps[i].lockedByPIU=lock; db.sps[i].lockedBy=lock?cu.name:null; db.sps[i].lockedAt=lock?now:null; });
+  saveDB(); renderDash(); toast((lock?'\uD83D\uDD12 Locked':'\uD83D\uDD13 Unlocked')+' '+idxs.length,lock?'warn':'info');
+}
+
+function dashEdit(idx){ nav('subproject'); setTimeout(function(){ editSP(idx); }, 50); }
+
+// ═══════════════════════════════════════════
+// SUBPROJECT FORM
+// ═══════════════════════════════════════════
+function newSP(){
+  editSpIdx=null;
+  clearSPForm();
+  if(cu&&cu.role==='da'){ $$('f-da').value=cu.da; $$('f-da').disabled=true; }
+  var maxId=db.sps.reduce(function(m,s){ return Math.max(m,parseInt(s.id)||0); },0);
+  $$('f-id').value=maxId+1;
+  $$('sp-form').style.display='block';
+  $$('sp-list').style.display='none';
+  showStep(0);
+}
+function cancelSP(){ $$('sp-form').style.display='none'; $$('sp-list').style.display='block'; editSpIdx=null; renderSPList(); }
+
+function showStep(n){
+  for(var i=0;i<7;i++){
+    var s=$$('sps'+i); if(s) s.style.display=i===n?'block':'none';
+    var tl=$$('tls'+i); if(tl){ tl.classList.toggle('active',i===n); tl.classList.toggle('done',i<n); }
+  }
+  spStep=n;
+}
+
+function spNext(step){
+  if(step===0){
+    if(!$$('f-yr').value||!$$('f-da').value||!$$('f-prov').value){ toast('Please fill Call Year, DA and Province','err'); return; }
+    if(!getR('component')){ toast('Please select Type of Support','err'); return; }
+  }
+  if(step===1){
+    if(!getR('benType')||!$$('f-co').value||!$$('f-ap').value){ toast('Please fill required fields','err'); return; }
+  }
+  saveDraft(false);
+  showStep(step+1);
+}
+function spPrev(step){ saveDraft(false); showStep(step-1); }
+
+function toggleCoFi(comp){
+  var wrap=$$('co-fi-wrap'); if(!wrap) return;
+  if(comp==='Component 1A'){
+    wrap.style.display='none';
+    $$('f-cofi').value='0'; $$('f-cofi').dataset.raw='0';
+  } else {
+    wrap.style.display='';
+  }
+  calcTotal();
+}
+function showContractDate(yes){ var w=$$('f-cdate-wrap'); if(w){ w.style.opacity=yes?'1':'0.4'; w.style.pointerEvents=yes?'auto':'none'; } }
+function autoSet6mDate(){
+  var cd = $$('f-cdate').value;
+  if(!cd) return;
+  var d = new Date(cd);
+  d.setMonth(d.getMonth()+6);
+  var iso = d.toISOString().slice(0,10);
+  var ctrl = $$('f-ctrl6');
+  if(ctrl && !ctrl.value) ctrl.value = iso; // only set if empty
+  // Also show info
+  toast('6-month control date auto-set to '+iso.split('-').reverse().join('.'),'info');
+}
+function calcAge(){ var a=parseInt($$('f-age').value)||0; $$('f-ageband').value=a>=18&&a<=35?'[18-35]':a>35?'(35+)':a?'N/A':''; }
+function calcTotal(){ var r=parseM('f-req'), c=parseM('f-cofi'); $$('f-total').value=(r+c)?fmtNum(r+c)+' TL':''; }
+function calcBase(){ var v=['f-bw1','f-bw2','f-bm1','f-bm2'].map(function(id){ return parseFloat($$(id).value)||0; }); $$('f-btot').value=v.reduce(function(a,b){return a+b;},0)||''; }
+function calcCom(){ var v=['f-cw1','f-cw2','f-cm1','f-cm2'].map(function(id){ return parseFloat($$(id).value)||0; }); $$('f-ctot').value=v.reduce(function(a,b){return a+b;},0)||''; }
+function calcCur(){
+  var v=['f-curw1','f-curw2','f-curm1','f-curm2'].map(function(id){ return parseFloat($$(id).value)||0; });
+  var tot=v.reduce(function(a,b){return a+b;},0);
+  $$('f-curtot').value=tot||'';
+  var com=parseFloat($$('f-ctot').value)||0;
+  var warn=$$('emp-warn');
+  if(warn){
+    if(com>0&&tot>0&&tot<com){
+      warn.style.display='flex';
+      warn.innerHTML='⚑ <strong>Realized employment ('+tot+') is below committed target ('+com+')</strong> — Beneficiary may face penalties. Please verify.';
+    } else { warn.style.display='none'; }
+  }
+}
+
+function getSPData(){
+  return {
+    id: parseInt($$('f-id').value)||null,
+    callYear: $$('f-yr').value,
+    da: $$('f-da').value,
+    province: $$('f-prov').value,
+    district: $$('f-dist').value,
+    component: getR('component'),
+    benType: getR('benType'),
+    company: $$('f-co').value,
+    applicant: $$('f-ap').value,
+    gender: getR('gender'),
+    age: $$('f-age').value,
+    ageBand: $$('f-ageband').value,
+    womanLed: getR('womanLed'),
+    nace: $$('f-nace').value,
+    appDate: $$('f-appdate').value,
+    reqAmount: parseM('f-req'),
+    coFinancing: parseM('f-cofi'),
+    status: $$('f-status').value,
+    approvedAmount: parseM('f-app'),
+    contractSigned: getR('contractSigned'),
+    contractDate: $$('f-cdate').value,
+    baselineDate: $$('f-bdate').value,
+    baseTotalEmp: $$('f-btot').value,
+    baseW1835: $$('f-bw1').value, baseW35: $$('f-bw2').value,
+    baseM1835: $$('f-bm1').value, baseM35: $$('f-bm2').value,
+    comTotalEmp: $$('f-ctot').value,
+    comW1835: $$('f-cw1').value, comW35: $$('f-cw2').value,
+    comM1835: $$('f-cm1').value, comM35: $$('f-cm2').value,
+    active6m: getR('active6m'),
+    control6mDate: $$('f-ctrl6').value,
+    curTotalEmp: $$('f-curtot').value,
+    curW1835: $$('f-curw1').value, curW35: $$('f-curw2').value,
+    curM1835: $$('f-curm1').value, curM35: $$('f-curm2').value,
+    updateSource: $$('f-src').value,
+    newEmp: getR('newEmp'),
+    lastUpdate: $$('f-lupd').value
+  };
+}
+
+function saveDraft(show){
+  if(show===undefined) show=true;
+  var d=getSPData();
+  if(!d.status) d.status='Draft';
+  var now=ts();
+  // Always find by id - safer after cloud sync
+  var ex=db.sps.findIndex(function(s){ return Number(s.id)===Number(d.id); });
+  if(ex>=0){
+    d.createdAt=db.sps[ex].createdAt||now; d.updatedAt=now;
+    d.lockedByPIU=db.sps[ex].lockedByPIU; d.lockedBy=db.sps[ex].lockedBy;
+    db.sps[ex]=d; editSpIdx=ex;
+  } else {
+    d.createdAt=now; d.updatedAt=now; db.sps.push(d); editSpIdx=db.sps.length-1;
+  }
+  saveDB();
+  cloudSave('subprojects', d.id, d);
+  if(show){
+    nav('dashboard');
+    setTimeout(function(){ toast('Draft saved!','info'); }, 100);
+  }
+}
+
+function saveSP(){
+  var d=getSPData();
+  if(!d.callYear||!d.da||!d.province||!d.company||!d.applicant){ toast('Required fields missing','err'); return; }
+  if(!d.status||d.status==='Draft'){ d.status=parseFloat(d.approvedAmount)>0?'Approved':'Draft'; }
+  if(d.status==='Draft'&&parseFloat(d.approvedAmount)>0) d.status='Approved';
+  var now=ts();
+  // Find by id always - index may shift after cloud sync
+  var spEx=db.sps.findIndex(function(s){ return Number(s.id)===Number(d.id); });
+  if(spEx>=0){
+    if(db.sps[spEx].lockedByPIU===true){ toast('⛔ Bu kayıt kilitli — kayıt edilemez.','err'); return; }
+    d.createdAt=db.sps[spEx].createdAt||now; d.updatedAt=now;
+    d.lockedByPIU=db.sps[spEx].lockedByPIU; d.lockedBy=db.sps[spEx].lockedBy;
+    db.sps[spEx]=d;
+  } else {
+    d.createdAt=now; d.updatedAt=now; db.sps.push(d);
+  }
+  saveDB();
+  editSpIdx=null;
+  $$('sp-form').style.display='none';
+  $$('sp-list').style.display='block';
+  nav('dashboard'); setTimeout(function(){ toast('✅ Subproject #'+d.id+' saved!'); }, 100);
+}
+
+function fillSPForm(r){
+  var f=function(id,v){ var el=$$(id); if(el&&v!==undefined&&v!==null) el.value=v; };
+  f('f-id',r.id); f('f-yr',r.callYear); f('f-da',r.da); f('f-prov',r.province); f('f-dist',r.district);
+  setR('component',r.component); if(r.component) toggleCoFi(r.component);
+  setR('benType',r.benType); f('f-co',r.company); f('f-ap',r.applicant);
+  setR('gender',r.gender); f('f-age',r.age); f('f-ageband',r.ageBand); setR('womanLed',r.womanLed);
+  f('f-nace',r.nace); f('f-appdate',r.appDate);
+  if(r.reqAmount){ $$('f-req').value=fmtNum(r.reqAmount); $$('f-req').dataset.raw=r.reqAmount; }
+  if(r.coFinancing){ $$('f-cofi').value=fmtNum(r.coFinancing); $$('f-cofi').dataset.raw=r.coFinancing; }
+  calcTotal();
+  f('f-status',r.status);
+  if(r.approvedAmount){ $$('f-app').value=fmtNum(r.approvedAmount); $$('f-app').dataset.raw=r.approvedAmount; }
+  setR('contractSigned',r.contractSigned); showContractDate(r.contractSigned==='Yes'); f('f-cdate',r.contractDate);
+  f('f-bdate',r.baselineDate); f('f-bw1',r.baseW1835); f('f-bw2',r.baseW35); f('f-bm1',r.baseM1835); f('f-bm2',r.baseM35); calcBase();
+  f('f-cw1',r.comW1835); f('f-cw2',r.comW35); f('f-cm1',r.comM1835); f('f-cm2',r.comM35); calcCom();
+  setR('active6m',r.active6m); f('f-ctrl6',r.control6mDate);
+  f('f-curw1',r.curW1835); f('f-curw2',r.curW35); f('f-curm1',r.curM1835); f('f-curm2',r.curM35); calcCur();
+  f('f-src',r.updateSource); setR('newEmp',r.newEmp); f('f-lupd',r.lastUpdate);
+}
+
+function clearSPForm(){
+  ['f-id','f-yr','f-da','f-prov','f-dist','f-co','f-ap','f-age','f-ageband','f-nace','f-appdate','f-req','f-cofi','f-total','f-status','f-app','f-cdate','f-bdate','f-bw1','f-bw2','f-bm1','f-bm2','f-btot','f-cw1','f-cw2','f-cm1','f-cm2','f-ctot','f-ctrl6','f-curtot','f-curw1','f-curw2','f-curm1','f-curm2','f-src','f-lupd'].forEach(function(id){ var el=$$(id); if(el&&!el.readOnly&&!el.disabled) el.value=''; });
+  clearRAll();
+  $$('emp-warn').style.display='none';
+  showContractDate(false);
+}
+
+function editSP(idx){
+  var r=db.sps[idx];
+  if(r.lockedByPIU===true){
+    // Play ding sound
+    try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+    toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
+    return;
+  }
+  editSpIdx=idx;
+  $$('sp-form').style.display='block';
+  $$('sp-list').style.display='none';
+  clearSPForm();
+  setTimeout(function(){ fillSPForm(r); showStep(0); }, 50);
+}
+
+// ═══════════════════════════════════════════
+// SP LIST RENDER
+// ═══════════════════════════════════════════
+function renderSPList(){
+  var sps=myData(db.sps);
+  renderSPTable(sps,'sp-tbody');
+  $$('sp-count').textContent=sps.length+' records';
+  $$('nb-sp').textContent=sps.length;
+  var df=$$('f-filterDA');
+  if(df){ var cv=df.value; while(df.options.length>1) df.remove(1); [...new Set(sps.map(function(s){ return s.da; }).filter(Boolean))].forEach(function(da){ df.add(new Option(da,da)); }); df.value=cv; }
+}
+
+function renderSPTable(sps, tbodyId){
+  var tbody=$$(tbodyId); if(!tbody) return;
+  if(!sps.length){ tbody.innerHTML='<tr><td colspan="12"><div class="empty"><div class="ei">📋</div><h3>No records</h3><p>Add your first subproject</p></div></td></tr>'; return; }
+  tbody.innerHTML=sps.map(function(s){
+    var idx=db.sps.indexOf(s);
+    var base=parseInt(s.baseTotalEmp)||0, cur=parseInt(s.curTotalEmp)||0;
+    var net=cur&&base?cur-base:null;
+    var com=parseInt(s.comTotalEmp)||0;
+    var sc=sbadge(s.status);
+    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">🔒</span>';
+    if(com>0&&cur>0&&cur<com) sc+=' <span class="badge br" style="font-size:9px">⚑</span>';
+    var netCell=net!==null?'<span style="color:'+(net>0?'var(--g500)':net<0?'var(--red)':'var(--muted)')+';">'+(net>0?'+':'')+net+'</span>':'—';
+    var lockBtn='', delBtn='';
+    if(cu&&cu.role==='piu'){
+      lockBtn='<button class="btn btn-xs" style="background:'+(s.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockSP('+idx+')">'+(s.lockedByPIU?'🔒':'🔓')+'</button>';
+      delBtn='<button class="btn btn-xs btn-d" onclick="promptDel('+idx+',\'sp\')">🗑</button>';
+    }
+    return '<tr>'
+      +'<td class="idc" title="ID: '+s.id+'">'+spCode(s)+'</td>'
+      +'<td>'+(s.callYear||'—')+'</td>'
+      +'<td title="'+(s.da||'')+'">'+daAbbr(s.da)+'</td>'
+      +'<td>'+(s.province||'—')+'</td>'
+      +'<td>'+(s.company||'—')+'</td>'
+      +'<td>'+(s.component||'—')+'</td>'
+      +'<td>'+sc+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(s.approvedAmount?fmtNum(s.approvedAmount):'-')+'</td>'
+      +'<td>'+(base||'—')+'</td>'
+      +'<td>'+netCell+'</td>'
+      +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
+      +(function(){
+      var editStyle=s.lockedByPIU?'opacity:0.3;cursor:not-allowed;':'';
+      var editTitle=s.lockedByPIU?'title="Locked by PIU"':'title="Edit"';
+      return '<td style="display:flex;gap:4px"><button class="btn btn-xs btn-o" style="'+editStyle+'" '+editTitle+' onclick="editSP('+idx+')">✏️</button>'+lockBtn+delBtn+'</td>';
+    })()
+      +'</tr>';
+  }).join('');
+}
+
+function exportXLSX(){
+  if(typeof XLSX==='undefined'){ toast('Excel library not loaded, try again','warn'); return; }
+  var wb = XLSX.utils.book_new();
+
+  // Sheet 1: Subprojects
+  var spCols=['Code','ID','Call Year','DA','Province','District','Ben Type','Company','Applicant',
+    'Gender','Age','Age Band','Woman-Led','Component','NACE','App Date','Req Amount (TL)',
+    'Co-Finance (TL)','Status','Approved Amount (TL)','Contract Signed','Contract Date',
+    'Baseline Date','Base Total Emp','Base W18-35','Base W35+','Base M18-35','Base M35+',
+    'Committed Total','Com W18-35','Com W35+','Com M18-35','Com M35+',
+    'Active 6m','6m Control Date','Current Total','Cur W18-35','Cur W35+','Cur M18-35','Cur M35+',
+    'Update Source','New Emp Created','Last Update','Locked','Created At','Updated At'];
+  var spRows=db.sps.map(function(s){
+    return [spCode(s),s.id,s.callYear,s.da,s.province,s.district,s.benType,s.company,s.applicant,
+      s.gender,s.age,s.ageBand,s.womanLed,s.component,s.nace,s.appDate,s.reqAmount,
+      s.coFinancing,s.status,s.approvedAmount,s.contractSigned,s.contractDate,
+      s.baselineDate,s.baseTotalEmp,s.baseW1835,s.baseW35,s.baseM1835,s.baseM35,
+      s.comTotalEmp,s.comW1835,s.comW35,s.comM1835,s.comM35,
+      s.active6m,s.control6mDate,s.curTotalEmp,s.curW1835,s.curW35,s.curM1835,s.curM35,
+      s.updateSource,s.newEmp,s.lastUpdate,s.lockedByPIU?'Yes':'No',
+      fmtTs(s.createdAt),fmtTs(s.updatedAt)];
+  });
+  var ws1 = XLSX.utils.aoa_to_sheet([spCols].concat(spRows));
+  // Header style
+  var range1 = XLSX.utils.decode_range(ws1['!ref']||'A1');
+  for(var C=range1.s.c; C<=range1.e.c; C++){
+    var addr=XLSX.utils.encode_cell({r:0,c:C});
+    if(!ws1[addr]) continue;
+    ws1[addr].s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'0D3320'}}};
+  }
+  ws1['!cols']=spCols.map(function(_,i){ var max=Math.max(spCols[i].length,...spRows.map(function(r){ return String(r[i]||'').length; })); return {wch:Math.min(max+2,40)}; });
+  XLSX.utils.book_append_sheet(wb, ws1, 'Subproject Register');
+
+  // Sheet 2: Payments
+  var pyCols=['Ref#','DA','Beneficiary','Component','Approved (TL)',
+    'Prepay%','Pre1 Amt','Pre1 Paid','Pre1 Date','Pre2 Amt','Pre2 Paid','Pre2 Date',
+    'Pay1 Amt','Pay1 Paid','Pay1 Date','Pay2 Amt','Pay2 Paid','Pay2 Date',
+    'Pay3 Amt','Pay3 Paid','Pay3 Date',
+    'Total Disbursed (TL)','Outstanding (TL)','% Disbursed',
+    'Rep1 Amt','Rep1 Paid','Rep1 Date','Rep2 Amt','Rep2 Paid','Rep2 Date',
+    'Notes','Locked','Created At','Updated At'];
+  var pyRows=db.pys.map(function(p){
+    return [p.refNum,p.da,p.beneficiary,p.component,p.approvedAmt,
+      p.prepayPct,p.pre1Amt,p.pre1Paid,p.pre1Date,p.pre2Amt,p.pre2Paid,p.pre2Date,
+      p.pay1Amt,p.pay1Paid,p.pay1Date,p.pay2Amt,p.pay2Paid,p.pay2Date,
+      p.pay3Amt,p.pay3Paid,p.pay3Date,
+      p.totalDisbursed,p.outstanding,(p.pctDisbursed*100).toFixed(1)+'%',
+      p.rep1Amt,p.rep1Paid,p.rep1Date,p.rep2Amt,p.rep2Paid,p.rep2Date,
+      p.notes,p.lockedByPIU?'Yes':'No',fmtTs(p.createdAt),fmtTs(p.updatedAt)];
+  });
+  var ws2 = XLSX.utils.aoa_to_sheet([pyCols].concat(pyRows));
+  ws2['!cols']=pyCols.map(function(_,i){ var max=Math.max(pyCols[i].length,...pyRows.map(function(r){ return String(r[i]||'').length; })); return {wch:Math.min(max+2,35)}; });
+  XLSX.utils.book_append_sheet(wb, ws2, 'Payment Register');
+
+  // Sheet 3: Summary stats
+  var appr=db.sps.filter(function(s){ return s.status==='Approved'; });
+  var totAppr=appr.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+  var totDisb=db.pys.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+  var baseEmp=appr.reduce(function(a,s){ return a+(parseInt(s.baseTotalEmp)||0); },0);
+  var curEmp=appr.reduce(function(a,s){ return a+(parseInt(s.curTotalEmp)||0); },0);
+  var women=appr.filter(function(s){ return s.gender==='Female'; }).length;
+  var sumData=[
+    ['SoGreen M&E Summary Report',''],
+    ['World Bank Loan 9407-TR | MoIT-DGD PIU',''],
+    ['Generated',''+fmtTs(ts())],
+    ['',''],
+    ['METRIC','VALUE'],
+    ['Total Subprojects',db.sps.length],
+    ['Approved Subprojects',appr.length],
+    ['Approval Rate (%)',db.sps.length?Math.round(appr.length/db.sps.length*100):0],
+    ['Total Payment Records',db.pys.length],
+    ['Total Approved Amount (TL)',totAppr],
+    ['Total Disbursed (TL)',totDisb],
+    ['% Disbursed',totAppr?Math.round(totDisb/totAppr*100):0],
+    ['Baseline Employment',baseEmp],
+    ['Current Employment',curEmp],
+    ['Net Employment Change',curEmp-baseEmp],
+    ['Female Beneficiaries',women],
+    ['Female % of Approved',appr.length?Math.round(women/appr.length*100):0],
+    ['Woman-Led Enterprises',appr.filter(function(s){ return s.womanLed==='Yes'; }).length],
+    ['Locked Records',db.sps.filter(function(s){ return s.lockedByPIU; }).length],
+    ['Below Committed Target',db.sps.filter(function(s){ var c=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0; return c>0&&r>0&&r<c; }).length]
+  ];
+  var ws3=XLSX.utils.aoa_to_sheet(sumData);
+  ws3['!cols']=[{wch:35},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Summary');
+
+  XLSX.writeFile(wb, 'SoGreen_MIS_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('Excel exported (3 sheets) ✓');
+}
+
+function filterSP(el){
+  var q=el?el.value.toLowerCase():'';
+  var da=$$('f-filterDA')?$$('f-filterDA').value:'';
+  var st=$$('f-filterSt')?$$('f-filterSt').value:'';
+  var sps=myData(db.sps).filter(function(s){
+    var code=spCode(s).toLowerCase();
+    var txt=(code+' '+s.company+' '+s.applicant+' '+s.province+' '+s.da+' '+s.id).toLowerCase();
+    return(!q||txt.includes(q))&&(!da||s.da===da)&&(!st||s.status===st);
+  });
+  renderSPTable(sps,'sp-tbody');
+  $$('sp-count').textContent=sps.length+' records';
+}
+
+// ═══════════════════════════════════════════
+// PAYMENT FORM
+// ═══════════════════════════════════════════
+function newPY(){
+  editPyIdx=null;
+  clearPYForm();
+  $$('py-form').style.display='block';
+  $$('py-list').style.display='none';
+  $$('py-ts').textContent=fmtTs(ts());
+  $$('py-prepay-card').style.display='none';
+  $$('py-repay-card').style.display='none';
+}
+function cancelPY(){ $$('py-form').style.display='none'; $$('py-list').style.display='block'; editPyIdx=null; renderPYList(); }
+
+function autoFillPY(){
+  var id=parseInt($$('p-ref').value);
+  if(!id) return;
+  var sp=db.sps.find(function(s){ return Number(s.id)===id; });
+  if(sp){
+    $$('p-da').value=sp.da||'';
+    $$('p-ben').value=sp.applicant||'';
+    $$('p-comp').value=sp.component||'';
+    $$('p-appr').value=sp.approvedAmount?fmtNum(sp.approvedAmount)+' TL':'';
+    $$('p-appr').dataset.raw=sp.approvedAmount||0;
+    var is1B=sp.component&&sp.component.includes('1B');
+    var is1A=sp.component==='Component 1A';
+    $$('py-prepay-card').style.display=is1B?'block':'none';
+    $$('py-repay-card').style.display=is1A?'block':'none';
+    toast('Auto-filled from Subproject #'+id,'info');
+  } else {
+    ['p-da','p-ben','p-comp','p-appr'].forEach(function(f){ $$(f).value=''; });
+    toast('Subproject #'+id+' not found','warn');
+  }
+}
+function calcPrepay(){
+  var pct=parseFloat($$('p-pct').value)||0;
+  var appr=parseFloat(($$('p-appr').dataset.raw||'0'))||0;
+  var total=appr*pct/100;
+  var el=$$('p-prepay-total');
+  if(el) el.value=total?fmtNum(total)+' TL':'';
+}
+
+function getPYData(){
+  var comp=$$('p-comp').value;
+  var approved=parseFloat(($$('p-appr').dataset.raw||'0'))||0;
+  var disbursed=0;
+  if(comp.includes('1B')){
+    if($$('p-pr1p').value==='Yes') disbursed+=parseFloat($$('p-pr1a').value)||0;
+    if($$('p-pr2p').value==='Yes') disbursed+=parseFloat($$('p-pr2a').value)||0;
+  }
+  if($$('p-p1p').value==='Yes') disbursed+=parseFloat($$('p-p1a').value)||0;
+  if($$('p-p2p').value==='Yes') disbursed+=parseFloat($$('p-p2a').value)||0;
+  if($$('p-p3p').value==='Yes') disbursed+=parseFloat($$('p-p3a').value)||0;
+  return {
+    refNum: parseInt($$('p-ref').value),
+    da: $$('p-da').value, beneficiary: $$('p-ben').value,
+    component: comp, approvedAmt: approved,
+    prepayPct: $$('p-pct').value,
+    pre1Amt: $$('p-pr1a').value, pre1Paid: $$('p-pr1p').value, pre1Date: $$('p-pr1d').value,
+    pre2Amt: $$('p-pr2a').value, pre2Paid: $$('p-pr2p').value, pre2Date: $$('p-pr2d').value,
+    pay1Amt: $$('p-p1a').value, pay1Paid: $$('p-p1p').value, pay1Date: $$('p-p1d').value,
+    pay2Amt: $$('p-p2a').value, pay2Paid: $$('p-p2p').value, pay2Date: $$('p-p2d').value,
+    pay3Amt: $$('p-p3a').value, pay3Paid: $$('p-p3p').value, pay3Date: $$('p-p3d').value,
+    rep1Amt: $$('p-r1a').value, rep1Paid: $$('p-r1p').value, rep1Date: $$('p-r1d').value,
+    rep2Amt: $$('p-r2a').value, rep2Paid: $$('p-r2p').value, rep2Date: $$('p-r2d').value,
+    notes: $$('p-notes').value,
+    totalDisbursed: disbursed,
+    outstanding: approved-disbursed,
+    pctDisbursed: approved?disbursed/approved:0
+  };
+}
+
+function savePY(){
+  var d=getPYData();
+  if(!d.refNum){ toast('Reference number required','err'); return; }
+  if(d.approvedAmt&&d.totalDisbursed>d.approvedAmt){ toast('Disbursed exceeds approved!','err'); return; }
+  var now=ts();
+  // Find by refNum - index may shift after cloud sync
+  var ex=db.pys.findIndex(function(p){ return Number(p.refNum)===Number(d.refNum); });
+  if(ex>=0){
+    if(db.pys[ex].lockedByPIU===true){ toast('⛔ Bu ödeme kilitli.','err'); return; }
+    d.createdAt=db.pys[ex].createdAt||now; d.updatedAt=now;
+    d.lockedByPIU=db.pys[ex].lockedByPIU;
+    db.pys[ex]=d;
+  } else {
+    d.createdAt=now; d.updatedAt=now;
+    db.pys.push(d);
+  }
+  saveDB();
+  // Cloud save - use refNum as id
+  cloudSavePY(Number(d.refNum), d);
+  $$('py-form').style.display='none';
+  $$('py-list').style.display='block';
+  editPyIdx=null;
+  renderPYList();
+  nav('dashboard');
+  setTimeout(function(){ toast('Payment Ref#'+d.refNum+' saved!'); }, 100);
+}
+
+function clearPYForm(){
+  $$('py-form').querySelectorAll('input,select,textarea').forEach(function(el){ if(!el.readOnly) el.value=''; });
+  $$('p-pct').value='';
+}
+
+function editPY(idx){
+  var r=db.pys[idx];
+  if(r.lockedByPIU===true){
+    try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+    toast('⛔ Bu ödeme PIU tarafından kilitlendi.','err');
+    return;
+  }
+  editPyIdx=idx;
+  clearPYForm();
+  $$('p-ref').value=r.refNum||'';
+  $$('p-da').value=r.da||'';
+  $$('p-ben').value=r.beneficiary||'';
+  $$('p-comp').value=r.component||'';
+  $$('p-appr').value=r.approvedAmt?fmtNum(r.approvedAmt)+' TL':'';
+  $$('p-appr').dataset.raw=r.approvedAmt||0;
+  $$('p-pct').value=r.prepayPct||'';
+  var flds=['pr1','pr2','p1','p2','p3','r1','r2'];
+  var ids={'pr1':'p-pr1','pr2':'p-pr2','p1':'p-p1','p2':'p-p2','p3':'p-p3','r1':'p-r1','r2':'p-r2'};
+  ['pre1','pre2','pay1','pay2','pay3','rep1','rep2'].forEach(function(k){
+    var pfx={'pre1':'p-pr1','pre2':'p-pr2','pay1':'p-p1','pay2':'p-p2','pay3':'p-p3','rep1':'p-r1','rep2':'p-r2'}[k];
+    if($$(pfx+'a')) $$(pfx+'a').value=r[k+'Amt']||'';
+    if($$(pfx+'p')) $$(pfx+'p').value=r[k+'Paid']||'';
+    if($$(pfx+'d')) $$(pfx+'d').value=r[k+'Date']||'';
+  });
+  $$('p-notes').value=r.notes||'';
+  $$('py-ts').textContent=fmtTs(r.updatedAt||r.createdAt);
+  var is1B=r.component&&r.component.includes('1B');
+  $$('py-prepay-card').style.display=is1B?'block':'none';
+  $$('py-repay-card').style.display=(!is1B&&r.component)?'block':'none';
+  $$('py-form').style.display='block';
+  $$('py-list').style.display='none';
+}
+
+function renderPYList(){
+  var pys=myData(db.pys);
+  renderPYTable(pys,'py-tbody');
+  $$('py-count').textContent=pys.length+' records';
+  $$('nb-py').textContent=pys.length;
+}
+
+function renderPYTable(pys, tbodyId){
+  var tbody=$$(tbodyId); if(!tbody) return;
+  if(!pys.length){ tbody.innerHTML='<tr><td colspan="10"><div class="empty"><div class="ei">💳</div><h3>No payments yet</h3></div></td></tr>'; return; }
+  tbody.innerHTML=pys.map(function(p){
+    var idx=db.pys.indexOf(p);
+    var pct=p.pctDisbursed?Math.round(p.pctDisbursed*100)+'%':'—';
+    var lockBtn='', delBtn='';
+    if(cu&&cu.role==='piu'){
+      lockBtn='<button class="btn btn-xs" style="background:'+(p.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockPY('+idx+')">'+(p.lockedByPIU?'🔒':'🔓')+'</button>';
+      delBtn='<button class="btn btn-xs btn-d" onclick="promptDel('+idx+',\'py\')">🗑</button>';
+    }
+    return '<tr>'
+      +'<td class="idc">#'+p.refNum+'</td>'
+      +'<td title="'+(p.da||'')+'">'+daAbbr(p.da)+'</td>'
+      +'<td>'+(p.beneficiary||'—')+'</td>'
+      +'<td>'+(p.component||'—')+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(p.approvedAmt?fmtNum(p.approvedAmt):'-')+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(p.totalDisbursed?fmtNum(p.totalDisbursed):'-')+'</td>'
+      +'<td>'+pct+'</td>'
+      +'<td style="font-family:var(--mono);font-size:11px">'+(p.outstanding?fmtNum(p.outstanding):'-')+'</td>'
+      +'<td class="tsc">'+fmtTs(p.updatedAt||p.createdAt)+'</td>'
+      +(function(){
+      var editStyle=p.lockedByPIU?'opacity:0.3;cursor:not-allowed;':'';
+      return '<td style="display:flex;gap:4px"><button class="btn btn-xs btn-o" style="'+editStyle+'" onclick="editPY('+idx+')">✏️</button>'+lockBtn+delBtn+'</td>';
+    })()
+      +'</tr>';
+  }).join('');
+}
+
+function filterPY(el){
+  var q=el.value.toLowerCase();
+  var pys=myData(db.pys).filter(function(p){ return (p.refNum+' '+p.beneficiary+' '+p.da).toLowerCase().includes(q); });
+  renderPYTable(pys,'py-tbody');
+}
+
+// ═══════════════════════════════════════════
+// LOCK
+// ═══════════════════════════════════════════
+function toggleLockSP(idx){
+  if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
+  db.sps[idx].lockedByPIU=!db.sps[idx].lockedByPIU;
+  db.sps[idx].lockedBy=db.sps[idx].lockedByPIU?cu.name:null;
+  db.sps[idx].lockedAt=db.sps[idx].lockedByPIU?ts():null;
+  saveDB(); renderSPList(); renderAllSP();
+  toast(db.sps[idx].lockedByPIU?'🔒 Subproject locked':'🔓 Subproject unlocked', db.sps[idx].lockedByPIU?'warn':'info');
+}
+function toggleLockPY(idx){
+  if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
+  db.pys[idx].lockedByPIU=!db.pys[idx].lockedByPIU;
+  db.pys[idx].lockedBy=db.pys[idx].lockedByPIU?cu.name:null;
+  saveDB(); renderPYList(); renderAllPY();
+  toast(db.pys[idx].lockedByPIU?'🔒 Payment locked':'🔓 Payment unlocked', db.pys[idx].lockedByPIU?'warn':'info');
+}
+function lockAll(lock){
+  if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
+  var now=ts();
+  db.sps.forEach(function(s){ s.lockedByPIU=lock; s.lockedBy=lock?cu.name:null; s.lockedAt=lock?now:null; });
+  db.pys.forEach(function(p){ p.lockedByPIU=lock; p.lockedBy=lock?cu.name:null; });
+  saveDB(); renderSPList(); renderPYList(); renderAllSP(); renderAllPY();
+  toast(lock?'🔒 All records locked':'🔓 All records unlocked', lock?'warn':'info');
+}
+
+// ═══════════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════════
+function promptDel(idx, type){
+  delPending={idx:idx,type:type};
+  var id=type==='sp'?'Subproject #'+db.sps[idx].id:'Payment Ref#'+db.pys[idx].refNum;
+  $$('del-target').textContent=id;
+  $$('del-modal').classList.add('open');
+}
+function confirmDel(){
+  if(!delPending) return;
+  var delId=null;
+  if(delPending.type==='sp'){
+    delId=db.sps[delPending.idx].id;
+    db.sps.splice(delPending.idx,1);
+    cloudDelete('subprojects', delId);
+  } else {
+    delId=delPending.idx+1;
+    db.pys.splice(delPending.idx,1);
+    cloudDelete('payments', delId);
+  }
+  saveDB(); closeM('del-modal'); toast('Record deleted','warn');
+  renderSPList(); renderPYList(); renderAllSP(); renderAllPY(); renderDash();
+  delPending=null;
+}
+
+// ═══════════════════════════════════════════
+// INDICATORS
+// ═══════════════════════════════════════════
+function renderInd(){
+  var daF=$$('ind-da')?$$('ind-da').value:'ALL';
+  var sps=db.sps.filter(function(s){ return daF==='ALL'||s.da===daF; });
+  var appr=sps.filter(function(s){ return s.status==='Approved'; });
+  var tot=appr.length||0;
+  var pys=db.pys.filter(function(p){ return daF==='ALL'||p.da===daF; });
+  var totDisb=pys.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+  var totAppr=appr.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+  var pdo2=tot?appr.filter(function(s){ return s.newEmp==='Yes'; }).length/tot:0;
+  var curJobs=appr.reduce(function(a,s){ return a+(parseInt(s.curTotalEmp)||0); },0);
+  var baseJobs=appr.reduce(function(a,s){ return a+(parseInt(s.baseTotalEmp)||0); },0);
+  var ir11=appr.filter(function(s){ return s.component==='Component 1A'&&s.contractSigned==='Yes'; }).length;
+  var ir12=appr.filter(function(s){ return s.component==='Component 1B-i'||s.component==='Component 1B-ii'; }).length;
+  var ir12w=appr.filter(function(s){ return (s.component==='Component 1B-i'||s.component==='Component 1B-ii')&&s.gender==='Female'; }).length;
+  var ir13=tot?appr.filter(function(s){ return s.gender==='Female'; }).length/tot:0;
+  var today=new Date();
+  // IR 1.5: eligible = contract date exists AND 6 months have passed
+  var ir15eligible=appr.filter(function(s){
+    if(!s.contractDate) return false;
+    var maturity=new Date(s.contractDate);
+    maturity.setMonth(maturity.getMonth()+6);
+    return today >= maturity;
+  });
+  // Still ongoing = contract signed but 6 months not yet reached
+  var ir15ongoing=appr.filter(function(s){
+    if(!s.contractDate) return false;
+    var maturity=new Date(s.contractDate);
+    maturity.setMonth(maturity.getMonth()+6);
+    return today < maturity;
+  });
+  var ir15tot=ir15eligible.length;
+  // Only count answered (Yes or No) among eligible
+  var ir15answered=ir15eligible.filter(function(s){ return s.active6m==='Yes'||s.active6m==='No'; });
+  var ir15yes=ir15answered.filter(function(s){ return s.active6m==='Yes'; }).length;
+  var ir15=ir15answered.length?ir15yes/ir15answered.length:null;
+  var ir15pending=ir15ongoing.length;
+  var ir15unanswered=ir15eligible.filter(function(s){ return s.active6m!=='Yes'&&s.active6m!=='No'; }).length;
+  var disbPct=totAppr?totDisb/totAppr:0;
+
+  $$('pdo-grid').innerHTML=
+    indCard('PDO-2','% beneficiaries hiring women/youth','New Employment Created = Yes',pdo2,0.8,'%')+
+    indCard('PDO-3','Current employment (project period)','Sum of current employment; baseline: '+baseJobs.toLocaleString(),curJobs,18000,'');
+  $$('ir-grid').innerHTML=
+    indCard('IR 1.1','Businesses using financial services (1A)','Approved 1A with Contract Signed',ir11,1810,'')+
+    indCard('IR 1.2','Beneficiaries of grant financing (1B)','Approved 1B-i and 1B-ii',ir12,3150,'')+
+    indCard('IR 1.2w','— of which: Women','Female 1B beneficiaries',ir12w,'Set target','')+
+    indCard('IR 1.3','% female beneficiaries (min 60%)','Female ÷ total approved',ir13,0.6,'%')+
+    (function(){
+      var desc='';
+      if(ir15tot===0&&ir15pending===0) desc='No projects with contract date yet';
+      else if(ir15tot===0) desc=ir15pending+' project'+(ir15pending>1?'s':'')+' still ongoing (6 months not reached)';
+      else desc='Eligible: '+ir15tot+' | Answered: '+ir15answered.length+' | Ongoing: '+ir15pending+(ir15unanswered>0?' | Awaiting response: '+ir15unanswered:'');
+      return (ir15===null
+        ? indCard('IR 1.5','% active after 6 months',desc,'N/A','80%','')
+        : indCard('IR 1.5','% active after 6 months',desc,ir15,0.8,'%'));
+    })()+
+    indCard('IR Disb','% approved funds disbursed','Disbursed ÷ approved',disbPct,1,'%');
+}
+
+function indCard(code,title,desc,cur,target,unit){
+  var isP=unit==='%', cv=isP?cur*100:cur;
+  var tv=isP&&typeof target==='number'?target*100:target;
+  var pct=tv&&typeof tv==='number'?Math.min(cv/tv*100,100):null;
+  var bc=pct===null?'':pct>=100?'':pct>=60?'warn':'danger';
+  var dv=isP?cv.toFixed(1)+'%':(typeof cv==='number'?cv.toLocaleString():cv);
+  var dt=tv===null||tv==='Set target'?'Set target':(isP?tv.toFixed(0)+'%':tv.toLocaleString());
+  return '<div class="ind-card">'
+    +'<div class="ind-code">'+code+'</div>'
+    +'<div class="ind-title">'+title+'</div>'
+    +'<div class="ind-desc">'+desc+'</div>'
+    +'<div class="ind-val">'+dv+'</div>'
+    +(pct!==null?'<div class="ind-bar-bg"><div class="ind-bar '+bc+'" style="width:'+pct+'%"></div></div>':'')
+    +'<div class="ind-nums"><span>Current: '+dv+'</span><span>Target: '+dt+'</span></div>'
+    +'</div>';
+}
+
+// ═══════════════════════════════════════════
+// REPORTING
+// ═══════════════════════════════════════════
+function populateRepDA(){
+  var el=$$('r-da'); if(!el) return;
+  while(el.options.length>1) el.remove(1);
+  DAS.forEach(function(da){ el.add(new Option(da,da)); });
+}
+
+function renderRep(){
+  var mode=$$('r-mode').value, yr=$$('r-yr').value, da=$$('r-da').value;
+  $$('r-ts').textContent='Generated: '+fmtTs(ts());
+  var sps=db.sps.filter(function(s){
+    if(da&&da!=='ALL'&&s.da!==da) return false;
+    if(yr&&yr!=='all'&&s.callYear!=yr) return false;
+    if(mode!=='cum'){ var q=getQ(s.contractDate||s.appDate||s.createdAt); if(q!==mode) return false; }
+    return true;
+  });
+  var pys=db.pys.filter(function(p){
+    if(da&&da!=='ALL'&&p.da!==da) return false;
+    if(mode!=='cum'){ var q=getQ(p.createdAt); if(q!==mode) return false; }
+    return true;
+  });
+  var appr=sps.filter(function(s){ return s.status==='Approved'; });
+  var totAppr=appr.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+  var totDisb=pys.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+  var baseEmp=appr.reduce(function(a,s){ return a+(parseInt(s.baseTotalEmp)||0); },0);
+  var curEmp=appr.reduce(function(a,s){ return a+(parseInt(s.curTotalEmp)||0); },0);
+  var netEmp=curEmp-baseEmp;
+  var women=appr.filter(function(s){ return s.gender==='Female'; }).length;
+  var wLed=appr.filter(function(s){ return s.womanLed==='Yes'; }).length;
+  var totRepaid=pys.reduce(function(a,p){ return a+(parseFloat(p.rep1Amt)||0)+(parseFloat(p.rep2Amt)||0); },0);
+  var flagged=appr.filter(function(s){ var c=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0; return c>0&&r>0&&r<c; }).length;
+  var lbl=mode==='cum'?'Cumulative':mode+(yr!=='all'?' '+yr:'');
+
+  // DA breakdown
+  var daMap={};
+  appr.forEach(function(s){
+    var d=daAbbr(s.da)||'?';
+    if(!daMap[d]) daMap[d]={cnt:0,appr:0,disb:0,base:0,cur:0,w:0};
+    daMap[d].cnt++; daMap[d].appr+=parseFloat(s.approvedAmount)||0;
+    daMap[d].base+=parseInt(s.baseTotalEmp)||0; daMap[d].cur+=parseInt(s.curTotalEmp)||0;
+    if(s.gender==='Female') daMap[d].w++;
+  });
+  pys.forEach(function(p){ var d=daAbbr(p.da)||'?'; if(daMap[d]) daMap[d].disb+=parseFloat(p.totalDisbursed)||0; });
+  var daRows=Object.keys(daMap).map(function(d){ var v=daMap[d]; return '<tr><td><strong>'+d+'</strong></td><td>'+v.cnt+'</td><td>'+(v.cnt?Math.round(v.w/v.cnt*100):0)+'%</td><td style="font-family:var(--mono)">'+fmtNum(v.appr)+'</td><td style="font-family:var(--mono)">'+fmtNum(v.disb)+'</td><td>'+v.base+'</td><td>'+v.cur+'</td></tr>'; }).join('');
+  daRows+='<tr class="tr-total"><td>TOTAL</td><td>'+appr.length+'</td><td>'+(appr.length?Math.round(women/appr.length*100):0)+'%</td><td style="font-family:var(--mono)">'+fmtNum(totAppr)+'</td><td style="font-family:var(--mono)">'+fmtNum(totDisb)+'</td><td>'+baseEmp+'</td><td>'+curEmp+'</td></tr>';
+
+  // Component breakdown
+  var cRows=['Component 1A','Component 1B-i','Component 1B-ii'].map(function(comp){
+    var rows=appr.filter(function(s){ return s.component===comp; });
+    var ta=rows.reduce(function(a,s){ return a+(parseFloat(s.approvedAmount)||0); },0);
+    var tw=rows.filter(function(s){ return s.gender==='Female'; }).length;
+    var rNums=rows.map(function(s){ return Number(s.id); });
+    var cp=pys.filter(function(p){ return rNums.includes(Number(p.refNum)); });
+    var td=cp.reduce(function(a,p){ return a+(parseFloat(p.totalDisbursed)||0); },0);
+    var tr=cp.reduce(function(a,p){ return a+(parseFloat(p.rep1Amt)||0)+(parseFloat(p.rep2Amt)||0); },0);
+    return '<tr><td><strong>'+comp+'</strong></td><td>'+rows.length+'</td><td>'+(rows.length?Math.round(tw/rows.length*100):0)+'%</td><td style="font-family:var(--mono)">'+fmtNum(ta)+'</td><td style="font-family:var(--mono)">'+(rows.length?fmtNum(ta/rows.length):'—')+'</td><td style="font-family:var(--mono);color:var(--g700)">'+(td?fmtNum(td):'—')+'</td><td style="font-family:var(--mono)">'+(tr?fmtNum(tr):'—')+'</td></tr>';
+  }).join('');
+
+  var html='<div class="card"><div class="ch"><h3>📊 Summary — '+lbl+'</h3><span class="tag">'+sps.length+' subprojects · '+pys.length+' payments</span></div><div class="cb">';
+  html+='<div class="sg"><div class="sc"><div class="sc-lbl">Total Subprojects</div><div class="sc-val">'+sps.length+'</div><div class="sc-sub">'+appr.length+' approved</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Total Approved</div><div class="sc-val">'+fmtMil(totAppr)+'</div><div class="sc-sub">'+fmtNum(totAppr)+' TL</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Total Disbursed</div><div class="sc-val">'+fmtMil(totDisb)+'</div><div class="sc-sub">'+(totAppr?Math.round(totDisb/totAppr*100)+'%':'0%')+' of approved</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Baseline Emp</div><div class="sc-val">'+baseEmp.toLocaleString()+'</div><div class="sc-sub">people</div></div>';
+  html+='<div class="sc"><div class="sc-lbl">Current Emp</div><div class="sc-val" style="color:var(--g500)">'+curEmp.toLocaleString()+'</div><div class="sc-sub">Net: '+(netEmp>=0?'+':'')+netEmp.toLocaleString()+'</div></div></div>';
+  html+='<div style="display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;margin-top:8px">';
+  html+='<span>👩 Women: <strong>'+women+' ('+(appr.length?Math.round(women/appr.length*100):0)+'%)</strong></span>';
+  html+='<span>🌸 Woman-led: <strong>'+wLed+'</strong></span>';
+  html+='<span>🔁 Repaid: <strong>'+fmtNum(totRepaid)+' TL</strong></span>';
+  if(flagged>0) html+='<span style="color:#991b1b;font-weight:700">⚑ '+flagged+' below committed</span>';
+  html+='<span>📅 '+fmtTs(ts())+'</span>';
+  html+='</div></div></div>';
+  html+='<div class="card"><div class="ch"><h3>🏛️ Breakdown by DA</h3></div><div style="overflow-x:auto"><table class="rt"><thead><tr><th>DA</th><th>Count</th><th>Women%</th><th>Approved (TL)</th><th>Disbursed (TL)</th><th>Base Emp</th><th>Cur Emp</th></tr></thead><tbody>'+daRows+'</tbody></table></div></div>';
+  html+='<div class="card"><div class="ch"><h3>🏷️ Breakdown by Component</h3></div><div style="overflow-x:auto"><table class="rt"><thead><tr><th>Component</th><th>Count</th><th>Women%</th><th>Total Approved</th><th>Avg Approved</th><th>Disbursed</th><th>Repaid</th></tr></thead><tbody>'+cRows+'</tbody></table></div></div>';
+  $$('rep-content').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════
+// ALL DATA
+// ═══════════════════════════════════════════
+function switchDTab(tab){
+  $$('dt-sp').style.display=tab==='sp'?'block':'none';
+  $$('dt-py').style.display=tab==='py'?'block':'none';
+  $$('dtab-sp').style.fontWeight=tab==='sp'?'700':'400';
+  $$('dtab-py').style.fontWeight=tab==='py'?'700':'400';
+}
+function renderAllSP(){
+  renderSPTable(db.sps,'dt-sp-tbody');
+  var cnt=db.sps.filter(function(s){ return s.lockedByPIU===true; }).length;
+  var ls=$$('lock-summary'); if(ls) ls.textContent='PIU Admin — '+cnt+' record'+(cnt!==1?'s':'')+' locked';
+}
+function renderAllPY(){ renderPYTable(db.pys,'dt-py-tbody'); }
+function filterAllSP(el){ var q=el.value.toLowerCase(); renderSPTable(db.sps.filter(function(s){ var code=spCode(s).toLowerCase(); return (code+' '+s.company+' '+s.da+' '+s.province+' '+s.applicant).toLowerCase().includes(q); }),'dt-sp-tbody'); }
+function filterAllPY(el){ var q=el.value.toLowerCase(); renderPYTable(db.pys.filter(function(p){ return (p.refNum+' '+p.beneficiary+' '+p.da).toLowerCase().includes(q); }),'dt-py-tbody'); }
+
+// ═══════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════
+function renderUsers(){
+  var tbody=$$('u-tbody'); if(!tbody) return;
+  tbody.innerHTML=db.users.map(function(u,i){
+    return '<tr>'
+      +'<td class="idc">'+u.u+'</td>'
+      +'<td>'+u.name+'</td>'
+      +'<td><span class="badge '+(u.role==='piu'?'bp':'bb')+'">'+(u.role==='piu'?'PIU Admin':'DA Specialist')+'</span></td>'
+      +'<td title="'+(u.da||'')+'">'+daAbbr(u.da)+'</td>'
+      +'<td class="tsc">'+fmtTs(u.created)+'</td>'
+      +'<td>'+(u.u!=='piu_admin'?'<button class="btn btn-xs btn-d" onclick="delUser('+i+')">🗑</button>':'—')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+function openAddUser(){
+  var el=$$('nu-da'); if(el&&el.options.length<2) DAS.forEach(function(da){ el.add(new Option(da,da)); });
+  $$('user-modal').classList.add('open');
+}
+function addUser(){
+  var u=$$('nu-u').value.trim(), n=$$('nu-n').value.trim(), p=$$('nu-p').value, r=$$('nu-r').value, d=$$('nu-da').value;
+  if(!u||!n||!p){ toast('All fields required','err'); return; }
+  if(db.users.find(function(x){ return x.u===u; })){ toast('Username exists','err'); return; }
+  var newUser={u:u,name:n,p:p,role:r,da:r==='da'?d:'ALL',created:ts()};
+  db.users.push(newUser);
+  saveDB();
+  if(supa) supa.from('users').upsert({username:u, data:newUser},{onConflict:'username'});
+  closeM('user-modal'); renderUsers(); toast('User added!');
+}
+function delUser(idx){ if(confirm('Delete user?')){ db.users.splice(idx,1); saveDB(); renderUsers(); toast('User deleted','warn'); } }
+
+// ═══════════════════════════════════════════
+// CSV EXPORT
+// ═══════════════════════════════════════════
+function exportCSV(type){
+  var cols, rows;
+  if(type==='sp'||type==='report'){
+    cols=['ID','Call Year','DA','Province','District','Ben Type','Company','Applicant','Gender','Age','Age Band','Woman-Led','Component','NACE','App Date','Req Amount','Co-Finance','Status','Approved Amount','Contract Signed','Contract Date','Baseline Date','Base Total','Base W18-35','Base W35+','Base M18-35','Base M35+','Com Total','Com W18-35','Com W35+','Com M18-35','Com M35+','Active 6m','6m Date','Cur Total','Cur W18-35','Cur W35+','Cur M18-35','Cur M35+','Update Source','New Emp','Last Update','Locked','Created','Updated'];
+    rows=db.sps.map(function(s){ return [s.id,s.callYear,s.da,s.province,s.district,s.benType,s.company,s.applicant,s.gender,s.age,s.ageBand,s.womanLed,s.component,s.nace,s.appDate,s.reqAmount,s.coFinancing,s.status,s.approvedAmount,s.contractSigned,s.contractDate,s.baselineDate,s.baseTotalEmp,s.baseW1835,s.baseW35,s.baseM1835,s.baseM35,s.comTotalEmp,s.comW1835,s.comW35,s.comM1835,s.comM35,s.active6m,s.control6mDate,s.curTotalEmp,s.curW1835,s.curW35,s.curM1835,s.curM35,s.updateSource,s.newEmp,s.lastUpdate,s.lockedByPIU?'Yes':'No',fmtTs(s.createdAt),fmtTs(s.updatedAt)]; });
+  } else {
+    cols=['Ref#','DA','Beneficiary','Component','Approved','Pre1','Pre1Paid','Pre1Date','Pre2','Pre2Paid','Pre2Date','Pay1','Pay1Paid','Pay1Date','Pay2','Pay2Paid','Pay2Date','Pay3','Pay3Paid','Pay3Date','Disbursed','Outstanding','%Disb','Rep1','Rep1Paid','Rep1Date','Rep2','Rep2Paid','Rep2Date','Notes','Locked','Created','Updated'];
+    rows=db.pys.map(function(p){ return [p.refNum,p.da,p.beneficiary,p.component,p.approvedAmt,p.pre1Amt,p.pre1Paid,p.pre1Date,p.pre2Amt,p.pre2Paid,p.pre2Date,p.pay1Amt,p.pay1Paid,p.pay1Date,p.pay2Amt,p.pay2Paid,p.pay2Date,p.pay3Amt,p.pay3Paid,p.pay3Date,p.totalDisbursed,p.outstanding,(p.pctDisbursed*100).toFixed(1)+'%',p.rep1Amt,p.rep1Paid,p.rep1Date,p.rep2Amt,p.rep2Paid,p.rep2Date,p.notes,p.lockedByPIU?'Yes':'No',fmtTs(p.createdAt),fmtTs(p.updatedAt)]; });
+  }
+  var csv=[cols].concat(rows).map(function(r){ return r.map(function(v){ return '"'+(v||'').toString().replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='SoGreen_'+type+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV exported ✓');
+}
+// Save original dashboard HTML on load
+document.addEventListener('DOMContentLoaded', function(){
+  var main = $$('page-dashboard');
+  if(main) _dashOriginalHTML = main.innerHTML;
+  initSupa();
+});
+</script>
+</body>
+</html>
