@@ -1495,16 +1495,14 @@ function editSP(idx){
   if(!r){ toast('Record not found','err'); return; }
   // Double-check lock from cloud before allowing edit
   if(supa && r.id){
-    supa.from('subprojects').select('data').eq('id',r.id).maybeSingle().then(function(res){
-      if(res.data && res.data.data && res.data.data.lockedByPIU===true){
-        // Update local and block
+    supa.from('subprojects').select('locked_by_piu').eq('id',r.id).maybeSingle().then(function(res){
+      if(res.data && res.data.locked_by_piu===true){
         db.sps[idx].lockedByPIU=true;
         try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
         toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
-        renderSPList(); // refresh to show lock icon
+        renderSPList();
         return;
       }
-      // Not locked - proceed with edit
       _doEditSP(idx);
     });
     return;
