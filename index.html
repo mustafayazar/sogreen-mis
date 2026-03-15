@@ -797,16 +797,20 @@ async function syncFromCloud(){
     if(r1.error) throw r1.error;
     if(r2.error) throw r2.error;
     if(r3.error) throw r3.error;
+    var lockCooldown = (Date.now() - _lastLockAction) < 5000; // 5 sec after lock, skip overwrite
     db.sps = r1.data.map(function(r){
       var d = r.data;
-      // IMPORTANT: locked_by_piu DB column is always the source of truth.
-      // Remove any stale lockedByPIU that may have been saved inside data JSONB
-      // to prevent sync from overwriting the dedicated column's value.
       delete d.lockedByPIU;
       delete d.lockedBy;
       delete d.lockedAt;
-      // Re-apply from the authoritative column
-      d.lockedByPIU = r.locked_by_piu===true;
+      if(!lockCooldown){
+        // Safe to apply cloud lock state
+        d.lockedByPIU = r.locked_by_piu===true;
+      } else {
+        // Recent lock action - keep local state, don't overwrite
+        var local = db.sps.find(function(s){ return s.id===r.id; });
+        d.lockedByPIU = local ? local.lockedByPIU : r.locked_by_piu===true;
+      }
       return d;
     });
     db.pys = r2.data.map(function(r){
@@ -814,7 +818,12 @@ async function syncFromCloud(){
       if(!d.refNum) d.refNum=r.ref_num;
       delete d.lockedByPIU;
       delete d.lockedBy;
-      d.lockedByPIU = r.locked_by_piu===true;
+      if(!lockCooldown){
+        d.lockedByPIU = r.locked_by_piu===true;
+      } else {
+        var localP = db.pys.find(function(p){ return p.refNum===r.ref_num; });
+        d.lockedByPIU = localP ? localP.lockedByPIU : r.locked_by_piu===true;
+      }
       return d;
     });
     if(r3.data.length > 0){
@@ -866,6 +875,7 @@ var db = {
   ]))
 };
 var cu = null; // current user
+var _lastLockAction = 0; // timestamp of last lock/unlock action
 var editSpIdx = null;
 var editPyIdx = null;
 var delPending = null;
@@ -972,8 +982,9 @@ function nav(id){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   $$('page-'+id).classList.add('active');
   var ni=$$('ni-'+id); if(ni) ni.classList.add('active');
-  // Sync on every navigation then render
-  if(id==='dashboard'){ if(cu&&cu.role==='piu'){ syncFromCloud().then(function(){ renderDash(); }); } else renderDash(); }
+  // Dashboard: render local state immediately (no sync - lock state is maintained locally)
+  // Other pages sync on nav to get fresh data from cloud
+  if(id==='dashboard'){ renderDash(); }
   else if(id==='subproject'){
     $$('sp-form').style.display='none'; $$('sp-list').style.display='block'; editSpIdx=null;
     var spTbody=$$('sp-tbody');
@@ -1241,6 +1252,7 @@ function approveRecord(idx){
 }
 function lockDA(da){
   if(!cu||cu.role!=='piu') return;
+  _lastLockAction = Date.now();
   var now=ts();
   db.sps.forEach(function(s){
     if(s.da===da){
@@ -1258,6 +1270,7 @@ function lockDA(da){
 }
 function unlockDA(da){
   if(!cu||cu.role!=='piu') return;
+  _lastLockAction = Date.now();
   var now=ts();
   db.sps.forEach(function(s){
     if(s.da===da){
@@ -1460,7 +1473,7 @@ function saveSP(){
   editSpIdx=null;
   $$('sp-form').style.display='none';
   $$('sp-list').style.display='block';
-  nav('dashboard'); setTimeout(function(){ toast('✅ Subproject #'+d.id+' saved!'); }, 100);
+  renderDash(); $$('page-dashboard').classList.add('active'); document.querySelectorAll('.page').forEach(function(p){ if(p.id!=='page-dashboard') p.classList.remove('active'); }); document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.id==='ni-dashboard'); }); setTimeout(function(){ toast('✅ Subproject #'+d.id+' saved!'); }, 100);
 }
 
 function fillSPForm(r){
@@ -1781,7 +1794,7 @@ function savePY(){
   $$('py-list').style.display='block';
   editPyIdx=null;
   renderPYList();
-  nav('dashboard');
+  renderDash(); $$('page-dashboard').classList.add('active'); document.querySelectorAll('.page').forEach(function(p){ if(p.id!=='page-dashboard') p.classList.remove('active'); }); document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.id==='ni-dashboard'); });
   setTimeout(function(){ toast('Payment Ref#'+d.refNum+' saved!'); }, 100);
 }
 
@@ -1879,6 +1892,7 @@ function toggleLockSP(idx){
   var s=db.sps[idx];
   if(!s){ toast('Record not found','err'); return; }
   var newLocked = s.lockedByPIU!==true;
+  _lastLockAction = Date.now(); // block sync overwrite for 5s
   // Optimistic local update
   s.lockedByPIU = newLocked;
   s.lockedBy = newLocked?cu.name:null;
@@ -1921,6 +1935,7 @@ function toggleLockPY(idx){
   var p=db.pys[idx];
   if(!p){ toast('Record not found','err'); return; }
   var newLocked = p.lockedByPIU!==true;
+  _lastLockAction = Date.now();
   var pRef = p.refNum;
   // Optimistic local update
   p.lockedByPIU = newLocked;
@@ -1954,6 +1969,7 @@ function toggleLockPY(idx){
 }
 function lockAll(lock){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
+  _lastLockAction = Date.now();
   var now=ts();
   db.sps.forEach(function(s){ s.lockedByPIU=lock; s.lockedBy=lock?cu.name:null; s.lockedAt=lock?now:null; });
   db.pys.forEach(function(p){ p.lockedByPIU=lock; p.lockedBy=lock?cu.name:null; });
