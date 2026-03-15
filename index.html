@@ -734,29 +734,39 @@ function initSupa(){
 async function cloudSave(table, id, data){
   if(!supa) return;
   try{
-    var saveData = Object.assign({}, data);
-    // Store lock separately - never let data write overwrite the lock column
+    // IMPORTANT: Never overwrite locked_by_piu via cloudSave
+    // locked_by_piu is only changed by toggleLockSP/PY
     var row = {
       id: id,
-      data: saveData,
-      locked_by_piu: saveData.lockedByPIU===true,
+      data: data,
       updated_at: new Date().toISOString()
     };
-    var result = await supa.from(table).upsert(row, {onConflict: 'id'});
-    if(result.error) console.warn('cloudSave error:', result.error);
+    // Use upsert but explicitly exclude locked_by_piu from update
+    // First check if record exists
+    var existing = await supa.from(table).select('locked_by_piu').eq('id', id).maybeSingle();
+    if(existing.data){
+      // Record exists - update only data and updated_at, NOT locked_by_piu
+      var result = await supa.from(table)
+        .update({data: data, updated_at: new Date().toISOString()})
+        .eq('id', id);
+      if(result.error) console.warn('cloudSave update error:', result.error);
+    } else {
+      // New record - insert with locked_by_piu=false
+      var result2 = await supa.from(table).insert({id: id, data: data, locked_by_piu: false, updated_at: new Date().toISOString()});
+      if(result2.error) console.warn('cloudSave insert error:', result2.error);
+    }
   } catch(e){ console.warn('cloudSave error:', e); }
 }
 
 async function cloudSavePY(refNum, data){
   if(!supa) return;
   try{
-    // Use refNum as the record identifier
-    var existing = await supa.from('payments').select('id').eq('ref_num', refNum).maybeSingle();
-    var row = {ref_num: refNum, data: data, updated_at: new Date().toISOString()};
-    if(existing.data && existing.data.id){
-      await supa.from('payments').update(row).eq('id', existing.data.id);
+    var existing = await supa.from('payments').select('id, locked_by_piu').eq('ref_num', refNum).maybeSingle();
+    if(existing.data){
+      // Update only data, never touch locked_by_piu
+      await supa.from('payments').update({data: data, updated_at: new Date().toISOString()}).eq('ref_num', Number(refNum));
     } else {
-      await supa.from('payments').insert(row);
+      await supa.from('payments').insert({ref_num: Number(refNum), data: data, locked_by_piu: false, updated_at: new Date().toISOString()});
     }
   } catch(e){ console.warn('cloudSavePY error:', e); }
 }
@@ -782,10 +792,11 @@ async function syncFromCloud(){
       d.lockedByPIU = r.locked_by_piu===true;
       return d;
     });
-    db.pys = r2.data.map(function(r){ 
-      var d=r.data; 
-      if(!d.refNum) d.refNum=r.ref_num; 
-      return d; 
+    db.pys = r2.data.map(function(r){
+      var d=r.data;
+      if(!d.refNum) d.refNum=r.ref_num;
+      d.lockedByPIU = r.locked_by_piu===true;
+      return d;
     });
     if(r3.data.length > 0){
       db.users = r3.data.map(function(r){ return r.data; });
