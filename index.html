@@ -1451,6 +1451,8 @@ function saveDraft(show){
 }
 
 function saveSP(){
+  // Recalculate auto fields before reading form data
+  calcCur(); calcBase(); calcCom(); calcTotal();
   var d=getSPData();
   if(!d.callYear||!d.da||!d.province||!d.company||!d.applicant){ toast('Required fields missing','err'); return; }
   if(!d.status||d.status==='Draft'){ d.status=parseFloat(d.approvedAmount)>0?'Approved':'Draft'; }
