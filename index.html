@@ -1451,27 +1451,25 @@ function saveDraft(show){
 }
 
 function saveSP(){
-  // Recalculate auto fields before reading form data
-  calcCur(); calcBase(); calcCom(); calcTotal();
-  var d=getSPData();
-  if(!d.callYear||!d.da||!d.province||!d.company||!d.applicant){ toast('Required fields missing','err'); return; }
-  if(!d.status||d.status==='Draft'){ d.status=parseFloat(d.approvedAmount)>0?'Approved':'Draft'; }
-  if(d.status==='Draft'&&parseFloat(d.approvedAmount)>0) d.status='Approved';
+  // saveDraft saves all current form data to db first
+  saveDraft(false);
   var now=ts();
-  // Find by id always - index may shift after cloud sync
-  var spEx=db.sps.findIndex(function(s){ return Number(s.id)===Number(d.id); });
-  if(spEx>=0){
-    if(db.sps[spEx].lockedByPIU===true){
-      try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
-      toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err'); return;
-    }
-    d.createdAt=db.sps[spEx].createdAt||now; d.updatedAt=now;
-    d.lockedByPIU=db.sps[spEx].lockedByPIU; d.lockedBy=db.sps[spEx].lockedBy;
-    db.sps[spEx]=d;
-  } else {
-    d.createdAt=now; d.updatedAt=now; db.sps.push(d);
+  // Find the record by id (saveDraft just wrote it)
+  var formId=parseInt($$('f-id').value)||null;
+  var spEx=db.sps.findIndex(function(s){ return Number(s.id)===Number(formId); });
+  if(spEx<0){ toast('Record not found','err'); return; }
+  if(db.sps[spEx].lockedByPIU===true){
+    try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+    toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err'); return;
   }
+  // Update status and timestamp on the already-saved record
+  db.sps[spEx].updatedAt=now;
+  if(!db.sps[spEx].status||db.sps[spEx].status==='Draft'){
+    db.sps[spEx].status=parseFloat(db.sps[spEx].approvedAmount)>0?'Approved':'Draft';
+  }
+  if(db.sps[spEx].status==='Draft'&&parseFloat(db.sps[spEx].approvedAmount)>0) db.sps[spEx].status='Approved';
   saveDB();
+  cloudSave('subprojects', db.sps[spEx].id, db.sps[spEx]);
   editSpIdx=null;
   $$('sp-form').style.display='none';
   $$('sp-list').style.display='block';
