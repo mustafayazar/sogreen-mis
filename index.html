@@ -939,6 +939,9 @@ function nav(id){
     $$('sp-list').style.display='block';
     editSpIdx=null;
     if(supa){
+      // Show loading state first
+      var tbody=$$('sp-tbody');
+      if(tbody) tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:30px;font-family:var(--mono);font-size:12px;color:var(--muted)">⏳ Syncing...</td></tr>';
       syncFromCloud().then(function(){ renderSPList(); });
     } else {
       renderSPList();
@@ -1402,7 +1405,10 @@ function saveSP(){
   // Find by id always - index may shift after cloud sync
   var spEx=db.sps.findIndex(function(s){ return Number(s.id)===Number(d.id); });
   if(spEx>=0){
-    if(db.sps[spEx].lockedByPIU===true){ toast('⛔ Bu kayıt kilitli — kayıt edilemez.','err'); return; }
+    if(db.sps[spEx].lockedByPIU===true){
+      try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+      toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err'); return;
+    }
     d.createdAt=db.sps[spEx].createdAt||now; d.updatedAt=now;
     d.lockedByPIU=db.sps[spEx].lockedByPIU; d.lockedBy=db.sps[spEx].lockedBy;
     db.sps[spEx]=d;
@@ -1472,6 +1478,12 @@ function editSP(idx){
 function _doEditSP(idx){
   var r=db.sps[idx];
   if(!r) return;
+  // Final lock check
+  if(r.lockedByPIU===true){
+    try{ var ac=new(window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
+    toast('⛔ Bu kayıt PIU tarafından kilitlendi.','err');
+    return;
+  }
   editSpIdx=idx;
   $$('sp-form').style.display='block';
   $$('sp-list').style.display='none';
@@ -1521,9 +1533,10 @@ function renderSPTable(sps, tbodyId){
       +'<td>'+netCell+'</td>'
       +'<td class="tsc">'+fmtTs(s.updatedAt||s.createdAt)+'</td>'
       +(function(){
-      var editStyle=s.lockedByPIU?'opacity:0.3;cursor:not-allowed;':'';
-      var editTitle=s.lockedByPIU?'title="Locked by PIU"':'title="Edit"';
-      return '<td style="display:flex;gap:4px"><button class="btn btn-xs btn-o" style="'+editStyle+'" '+editTitle+' onclick="editSP('+idx+')">✏️</button>'+lockBtn+delBtn+'</td>';
+      var editBtn=s.lockedByPIU===true
+        ?'<span style="font-size:13px;opacity:0.5" title="PIU tarafından kilitlendi">🔒</span>'
+        :'<button class="btn btn-xs btn-o" onclick="editSP('+idx+')">✏️</button>';
+      return '<td style="display:flex;gap:4px;align-items:center">'+editBtn+lockBtn+delBtn+'</td>';
     })()
       +'</tr>';
   }).join('');
@@ -1799,8 +1812,10 @@ function renderPYTable(pys, tbodyId){
       +'<td style="font-family:var(--mono);font-size:11px">'+(p.outstanding?fmtNum(p.outstanding):'-')+'</td>'
       +'<td class="tsc">'+fmtTs(p.updatedAt||p.createdAt)+'</td>'
       +(function(){
-      var editStyle=p.lockedByPIU?'opacity:0.3;cursor:not-allowed;':'';
-      return '<td style="display:flex;gap:4px"><button class="btn btn-xs btn-o" style="'+editStyle+'" onclick="editPY('+idx+')">✏️</button>'+lockBtn+delBtn+'</td>';
+      var pyEditBtn=p.lockedByPIU===true
+        ?'<span style="font-size:13px;opacity:0.5" title="PIU tarafından kilitlendi">🔒</span>'
+        :'<button class="btn btn-xs btn-o" onclick="editPY('+idx+')">✏️</button>';
+      return '<td style="display:flex;gap:4px;align-items:center">'+pyEditBtn+lockBtn+delBtn+'</td>';
     })()
       +'</tr>';
   }).join('');
