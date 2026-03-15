@@ -383,6 +383,7 @@ tbody td{padding:9px 14px;vertical-align:middle}
         <div class="fg">
           <div class="field"><label>Selection Status</label><select id="f-status"><option value="">— Select —</option><option>Approved</option><option>Pending</option><option>Rejected</option><option>On Hold</option></select></div>
           <div class="field"><label>Approved Amount (TL)</label><input type="text" inputmode="numeric" id="f-app" placeholder="0" oninput="fmtM(this)"></div>
+          <div class="field"><label>Project Duration (months) <span style="font-size:9px;color:var(--muted)">e.g. 6, 9, 12</span></label><input type="number" id="f-projdur" placeholder="e.g. 6" min="1" max="60" oninput="autoSet6mDate()"></div>
           <div class="field"><label>Contract Signed?</label>
             <div class="rg">
               <div class="ro" data-n="contractSigned" data-v="Yes" onclick="selR(this);showContractDate(true)">Yes</div>
@@ -435,10 +436,11 @@ tbody td{padding:9px 14px;vertical-align:middle}
       <div class="ch"><h3>🔄 Follow-Up & Current Status</h3><span class="tag">STEP 7/7</span></div>
       <div class="cb">
         <div class="fg fg2" style="margin-bottom:14px">
+          <div class="field"><label>Project Duration <span class="autotag">FROM CONTRACT</span></label><input type="text" id="f-projdur-disp" class="auto-inp" readonly placeholder="Set in Contract step"></div>
+          <div class="field"><label>6-Month Follow-Up Date <span class="autotag">AUTO</span></label><input type="date" id="f-ctrl6"><span class="hint">Auto-set: contract date + duration + 6 months</span></div>
           <div class="field"><label>Active After 6 Months?</label>
-            <div class="rg"><div class="ro" data-n="active6m" data-v="Yes" onclick="selR(this)">Yes</div><div class="ro" data-n="active6m" data-v="No" onclick="selR(this)">No</div></div>
+            <div class="rg"><div class="ro" data-n="active6m" data-v="Yes" onclick="selR(this)">Yes — Still Active</div><div class="ro" data-n="active6m" data-v="No" onclick="selR(this)">No — Closed</div></div>
           </div>
-          <div class="field"><label>6-Month Control Date</label><input type="date" id="f-ctrl6"></div>
           <div class="field"><label>Current Total <span class="autotag">AUTO</span></label><input type="text" id="f-curtot" class="auto-inp" readonly placeholder="Sum below"></div>
           <div class="field"><label>Update Source</label><select id="f-src"><option value="">— Select —</option><option>Spot Check</option><option>Site Visit</option><option>Self-Report</option><option>DA Report</option></select></div>
         </div>
@@ -568,7 +570,16 @@ tbody td{padding:9px 14px;vertical-align:middle}
     </div>
 
     <div class="card">
-      <div class="cb"><div class="field"><label>Notes</label><textarea id="p-notes" rows="2" placeholder="Any additional notes..."></textarea></div></div>
+      <div class="cb">
+        <div class="field" style="margin-bottom:14px">
+          <label>Payment Status <span style="font-size:9px;color:var(--muted)">(1B only — used for IR 1.2)</span></label>
+          <div class="rg">
+            <div class="ro" data-n="paymentsComplete" data-v="Yes" onclick="selR(this)">✅ All Payments Complete</div>
+            <div class="ro" data-n="paymentsComplete" data-v="No" onclick="selR(this)">⏳ Payments Ongoing</div>
+          </div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="p-notes" rows="2" placeholder="Any additional notes..."></textarea></div>
+      </div>
       <div class="ab">
         <span style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="py-ts">—</span>
         <div class="ab-r"><button class="btn btn-s" onclick="cancelPY()">✕ Cancel</button><button class="btn btn-p" onclick="savePY()">💾 Save Payment</button></div>
@@ -1310,13 +1321,18 @@ function showContractDate(yes){ var w=$$('f-cdate-wrap'); if(w){ w.style.opacity
 function autoSet6mDate(){
   var cd = $$('f-cdate').value;
   if(!cd) return;
-  var d = new Date(cd);
-  d.setMonth(d.getMonth()+6);
-  var iso = d.toISOString().slice(0,10);
+  var dur = parseInt($$('f-projdur')?$$('f-projdur').value||'6':'6') || 6;
+  // Follow-up = project end + 6 months
+  var endDate = new Date(cd);
+  endDate.setMonth(endDate.getMonth() + dur);
+  var followUp = new Date(endDate);
+  followUp.setMonth(followUp.getMonth() + 6);
+  var isoEnd = endDate.toISOString().slice(0,10);
+  var isoFollowUp = followUp.toISOString().slice(0,10);
+  // Set project end date info and follow-up control date
   var ctrl = $$('f-ctrl6');
-  if(ctrl && !ctrl.value) ctrl.value = iso; // only set if empty
-  // Also show info
-  toast('6-month control date auto-set to '+iso.split('-').reverse().join('.'),'info');
+  if(ctrl) ctrl.value = isoFollowUp;
+  toast('Project ends: '+isoEnd.split('-').reverse().join('.')+' | 6-month check: '+isoFollowUp.split('-').reverse().join('.'),'info');
 }
 function calcAge(){ var a=parseInt($$('f-age').value)||0; $$('f-ageband').value=a>=18&&a<=35?'[18-35]':a>35?'(35+)':a?'N/A':''; }
 function calcTotal(){ var r=parseM('f-req'), c=parseM('f-cofi'); $$('f-total').value=(r+c)?fmtNum(r+c)+' TL':''; }
@@ -1359,6 +1375,8 @@ function getSPData(){
     approvedAmount: parseM('f-app'),
     contractSigned: getR('contractSigned'),
     contractDate: $$('f-cdate').value,
+    projectDuration: $$('f-projdur')?$$('f-projdur').value:'',
+    projectEndDate: (function(){ var cd=$$('f-cdate').value; var dur=parseInt($$('f-projdur')?$$('f-projdur').value||'6':'6')||6; if(!cd) return ''; var d=new Date(cd); d.setMonth(d.getMonth()+dur); return d.toISOString().slice(0,10); })(),
     baselineDate: $$('f-bdate').value,
     baseTotalEmp: $$('f-btot').value,
     baseW1835: $$('f-bw1').value, baseW35: $$('f-bw2').value,
@@ -1437,7 +1455,7 @@ function fillSPForm(r){
   calcTotal();
   f('f-status',r.status);
   if(r.approvedAmount){ $$('f-app').value=fmtNum(r.approvedAmount); $$('f-app').dataset.raw=r.approvedAmount; }
-  setR('contractSigned',r.contractSigned); showContractDate(r.contractSigned==='Yes'); f('f-cdate',r.contractDate);
+  setR('contractSigned',r.contractSigned); showContractDate(r.contractSigned==='Yes'); f('f-cdate',r.contractDate); f('f-projdur',r.projectDuration);
   f('f-bdate',r.baselineDate); f('f-bw1',r.baseW1835); f('f-bw2',r.baseW35); f('f-bm1',r.baseM1835); f('f-bm2',r.baseM35); calcBase();
   f('f-cw1',r.comW1835); f('f-cw2',r.comW35); f('f-cm1',r.comM1835); f('f-cm2',r.comM35); calcCom();
   setR('active6m',r.active6m); f('f-ctrl6',r.control6mDate);
@@ -1714,6 +1732,7 @@ function getPYData(){
     pay3Amt: $$('p-p3a').value, pay3Paid: $$('p-p3p').value, pay3Date: $$('p-p3d').value,
     rep1Amt: $$('p-r1a').value, rep1Paid: $$('p-r1p').value, rep1Date: $$('p-r1d').value,
     rep2Amt: $$('p-r2a').value, rep2Paid: $$('p-r2p').value, rep2Date: $$('p-r2d').value,
+    paymentsComplete: getR('paymentsComplete'),
     notes: $$('p-notes').value,
     totalDisbursed: disbursed,
     outstanding: approved-disbursed,
@@ -1779,6 +1798,7 @@ function editPY(idx){
     if($$(pfx+'d')) $$(pfx+'d').value=r[k+'Date']||'';
   });
   $$('p-notes').value=r.notes||'';
+  setR('paymentsComplete',r.paymentsComplete||'');
   $$('py-ts').textContent=fmtTs(r.updatedAt||r.createdAt);
   var is1B=r.component&&r.component.includes('1B');
   $$('py-prepay-card').style.display=is1B?'block':'none';
@@ -1939,23 +1959,34 @@ function renderInd(){
   var curJobs=appr.reduce(function(a,s){ return a+(parseInt(s.curTotalEmp)||0); },0);
   var baseJobs=appr.reduce(function(a,s){ return a+(parseInt(s.baseTotalEmp)||0); },0);
   var ir11=appr.filter(function(s){ return s.component==='Component 1A'&&s.contractSigned==='Yes'; }).length;
-  var ir12=appr.filter(function(s){ return s.component==='Component 1B-i'||s.component==='Component 1B-ii'; }).length;
-  var ir12w=appr.filter(function(s){ return (s.component==='Component 1B-i'||s.component==='Component 1B-ii')&&s.gender==='Female'; }).length;
-  var ir13=tot?appr.filter(function(s){ return s.gender==='Female'; }).length/tot:0;
+  // IR 1.2: 1B subprojects where all payments are marked complete
+  var ir12base=appr.filter(function(s){ return s.component==='Component 1B-i'||s.component==='Component 1B-ii'; });
+  var ir12=ir12base.filter(function(s){
+    var refNums=[Number(s.id)];
+    var py=db.pys.find(function(p){ return refNums.includes(Number(p.refNum)); });
+    return py && py.paymentsComplete==='Yes';
+  }).length;
+  var ir12total=ir12base.length; // total 1B for reference
+  var ir12w=ir12base.filter(function(s){ return s.gender==='Female'; }).length;
+  // IR 1.3: % woman-led enterprises (womanLed=Yes) among all approved
+  var ir13=tot?appr.filter(function(s){ return s.womanLed==='Yes'; }).length/tot:0;
   var today=new Date();
-  // IR 1.5: eligible = contract date exists AND 6 months have passed
+  // IR 1.5: eligible = project ended AND 6-month follow-up date has passed
   var ir15eligible=appr.filter(function(s){
     if(!s.contractDate) return false;
-    var maturity=new Date(s.contractDate);
-    maturity.setMonth(maturity.getMonth()+6);
-    return today >= maturity;
+    var dur=parseInt(s.projectDuration||'6')||6;
+    // Follow-up = contract date + project duration + 6 months
+    var followUp=new Date(s.contractDate);
+    followUp.setMonth(followUp.getMonth()+dur+6);
+    return today >= followUp; // follow-up date reached
   });
-  // Still ongoing = contract signed but 6 months not yet reached
+  // Ongoing = project not yet ended OR follow-up not yet due
   var ir15ongoing=appr.filter(function(s){
     if(!s.contractDate) return false;
-    var maturity=new Date(s.contractDate);
-    maturity.setMonth(maturity.getMonth()+6);
-    return today < maturity;
+    var dur=parseInt(s.projectDuration||'6')||6;
+    var followUp=new Date(s.contractDate);
+    followUp.setMonth(followUp.getMonth()+dur+6);
+    return today < followUp;
   });
   var ir15tot=ir15eligible.length;
   // Only count answered (Yes or No) among eligible
@@ -1968,12 +1999,12 @@ function renderInd(){
 
   $$('pdo-grid').innerHTML=
     indCard('PDO-2','% beneficiaries hiring women/youth','New Employment Created = Yes',pdo2,0.8,'%')+
-    indCard('PDO-3','Current employment (project period)','Sum of current employment; baseline: '+baseJobs.toLocaleString(),curJobs,18000,'');
+    indCard('PDO-3','New Employment Created (project period)','Current employment across approved projects; baseline: '+baseJobs.toLocaleString(),curJobs,18000,'');
   $$('ir-grid').innerHTML=
     indCard('IR 1.1','Businesses using financial services (1A)','Approved 1A with Contract Signed',ir11,1810,'')+
-    indCard('IR 1.2','Beneficiaries of grant financing (1B)','Approved 1B-i and 1B-ii',ir12,3150,'')+
+    indCard('IR 1.2','1B beneficiaries with all payments complete','Total 1B approved: '+ir12total+' | Complete: '+ir12,3150,'')+
     indCard('IR 1.2w','— of which: Women','Female 1B beneficiaries',ir12w,'Set target','')+
-    indCard('IR 1.3','% female beneficiaries (min 60%)','Female ÷ total approved',ir13,0.6,'%')+
+    indCard('IR 1.3','% woman-led enterprises (min 60%)','Woman-Led=Yes ÷ total approved',ir13,0.6,'%')+
     (function(){
       var desc='';
       if(ir15tot===0&&ir15pending===0) desc='No projects with contract date yet';
