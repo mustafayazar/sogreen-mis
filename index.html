@@ -745,25 +745,21 @@ function initSupa(){
 async function cloudSave(table, id, data){
   if(!supa) return;
   try{
-    // IMPORTANT: Never overwrite locked_by_piu via cloudSave
-    // locked_by_piu is only changed by toggleLockSP/PY
-    var row = {
-      id: id,
-      data: data,
-      updated_at: new Date().toISOString()
-    };
-    // Use upsert but explicitly exclude locked_by_piu from update
-    // First check if record exists
+    // Strip lock-related fields from data JSONB — these live in dedicated DB columns only
+    var cleanData = Object.assign({}, data);
+    delete cleanData.lockedByPIU;
+    delete cleanData.lockedBy;
+    delete cleanData.lockedAt;
     var existing = await supa.from(table).select('locked_by_piu').eq('id', id).maybeSingle();
     if(existing.data){
       // Record exists - update only data and updated_at, NOT locked_by_piu
       var result = await supa.from(table)
-        .update({data: data, updated_at: new Date().toISOString()})
+        .update({data: cleanData, updated_at: new Date().toISOString()})
         .eq('id', id);
       if(result.error) console.warn('cloudSave update error:', result.error);
     } else {
       // New record - insert with locked_by_piu=false
-      var result2 = await supa.from(table).insert({id: id, data: data, locked_by_piu: false, updated_at: new Date().toISOString()});
+      var result2 = await supa.from(table).insert({id: id, data: cleanData, locked_by_piu: false, updated_at: new Date().toISOString()});
       if(result2.error) console.warn('cloudSave insert error:', result2.error);
     }
   } catch(e){ console.warn('cloudSave error:', e); }
@@ -772,12 +768,16 @@ async function cloudSave(table, id, data){
 async function cloudSavePY(refNum, data){
   if(!supa) return;
   try{
+    // Strip lock-related fields from data JSONB
+    var cleanData = Object.assign({}, data);
+    delete cleanData.lockedByPIU;
+    delete cleanData.lockedBy;
     var existing = await supa.from('payments').select('id, locked_by_piu').eq('ref_num', refNum).maybeSingle();
     if(existing.data){
       // Update only data, never touch locked_by_piu
-      await supa.from('payments').update({data: data, updated_at: new Date().toISOString()}).eq('ref_num', Number(refNum));
+      await supa.from('payments').update({data: cleanData, updated_at: new Date().toISOString()}).eq('ref_num', Number(refNum));
     } else {
-      await supa.from('payments').insert({ref_num: Number(refNum), data: data, locked_by_piu: false, updated_at: new Date().toISOString()});
+      await supa.from('payments').insert({ref_num: Number(refNum), data: cleanData, locked_by_piu: false, updated_at: new Date().toISOString()});
     }
   } catch(e){ console.warn('cloudSavePY error:', e); }
 }
@@ -799,13 +799,21 @@ async function syncFromCloud(){
     if(r3.error) throw r3.error;
     db.sps = r1.data.map(function(r){
       var d = r.data;
-      // Always use the dedicated locked_by_piu column as source of truth
+      // IMPORTANT: locked_by_piu DB column is always the source of truth.
+      // Remove any stale lockedByPIU that may have been saved inside data JSONB
+      // to prevent sync from overwriting the dedicated column's value.
+      delete d.lockedByPIU;
+      delete d.lockedBy;
+      delete d.lockedAt;
+      // Re-apply from the authoritative column
       d.lockedByPIU = r.locked_by_piu===true;
       return d;
     });
     db.pys = r2.data.map(function(r){
       var d=r.data;
       if(!d.refNum) d.refNum=r.ref_num;
+      delete d.lockedByPIU;
+      delete d.lockedBy;
       d.lockedByPIU = r.locked_by_piu===true;
       return d;
     });
@@ -1237,13 +1245,13 @@ function lockDA(da){
   db.sps.forEach(function(s){
     if(s.da===da){
       s.lockedByPIU=true; s.lockedBy=cu.name; s.lockedAt=now;
-      if(supa) supa.from('subprojects').update({locked_by_piu:true,data:s,updated_at:now}).eq('id',s.id);
+      if(supa) supa.from('subprojects').update({locked_by_piu:true, updated_at:now}).eq('id',s.id);
     }
   });
   db.pys.forEach(function(p){
     if(p.da===da){
       p.lockedByPIU=true; p.lockedBy=cu.name;
-      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:true,data:p,updated_at:now}).eq('ref_num',Number(p.refNum));
+      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:true, updated_at:now}).eq('ref_num',Number(p.refNum));
     }
   });
   saveDB(); renderDash(); toast(daAbbr(da)+' locked','warn');
@@ -1254,13 +1262,13 @@ function unlockDA(da){
   db.sps.forEach(function(s){
     if(s.da===da){
       s.lockedByPIU=false; s.lockedBy=null; s.lockedAt=null;
-      if(supa) supa.from('subprojects').update({locked_by_piu:false,data:s,updated_at:now}).eq('id',s.id);
+      if(supa) supa.from('subprojects').update({locked_by_piu:false, updated_at:now}).eq('id',s.id);
     }
   });
   db.pys.forEach(function(p){
     if(p.da===da){
       p.lockedByPIU=false; p.lockedBy=null;
-      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:false,data:p,updated_at:now}).eq('ref_num',Number(p.refNum));
+      if(supa&&p.refNum) supa.from('payments').update({locked_by_piu:false, updated_at:now}).eq('ref_num',Number(p.refNum));
     }
   });
   saveDB(); renderDash(); toast(daAbbr(da)+' unlocked','info');
@@ -1274,7 +1282,11 @@ function bulkApprove(){
 }
 function bulkLock(lock){
   var idxs=getCheckedIdx(); if(!idxs.length){ toast('No records selected','warn'); return; }
-  var now=ts(); idxs.forEach(function(i){ db.sps[i].lockedByPIU=lock; db.sps[i].lockedBy=lock?cu.name:null; db.sps[i].lockedAt=lock?now:null; });
+  var now=ts();
+  idxs.forEach(function(i){
+    db.sps[i].lockedByPIU=lock; db.sps[i].lockedBy=lock?cu.name:null; db.sps[i].lockedAt=lock?now:null;
+    if(supa) supa.from('subprojects').update({locked_by_piu:lock, updated_at:now}).eq('id',db.sps[i].id);
+  });
   saveDB(); renderDash(); toast((lock?'\uD83D\uDD12 Locked':'\uD83D\uDD13 Unlocked')+' '+idxs.length,lock?'warn':'info');
 }
 
@@ -1869,6 +1881,7 @@ function toggleLockSP(idx){
   var s=db.sps[idx];
   if(!s){ toast('Record not found','err'); return; }
   var newLocked = s.lockedByPIU!==true;
+  // Optimistic local update
   s.lockedByPIU = newLocked;
   s.lockedBy = newLocked?cu.name:null;
   s.lockedAt = newLocked?ts():null;
@@ -1877,14 +1890,31 @@ function toggleLockSP(idx){
   renderAllSP();
   if($$('page-dashboard').classList.contains('active')) _renderPIUDashInner();
   toast(newLocked?'Locked':'Unlocked', newLocked?'warn':'info');
-  // Save lock to dedicated column in cloud
+  // Save lock to cloud — send ONLY the lock columns, never data JSONB here
+  // (data JSONB contains lockedByPIU which would conflict on next sync)
   if(supa){
+    var sid = s.id;
     supa.from('subprojects')
-      .update({locked_by_piu: newLocked, data: s, updated_at: new Date().toISOString()})
-      .eq('id', s.id)
+      .update({locked_by_piu: newLocked, updated_at: new Date().toISOString()})
+      .eq('id', sid)
       .then(function(r){
-        if(r.error) console.error('Lock save error:', r.error);
-        else console.log('Lock saved: id='+s.id+' locked='+newLocked);
+        if(r.error){
+          console.error('Lock save error:', r.error);
+          // Rollback local state so UI stays consistent with DB
+          var rollIdx = db.sps.findIndex(function(x){ return x.id===sid; });
+          if(rollIdx>-1){
+            db.sps[rollIdx].lockedByPIU = !newLocked;
+            db.sps[rollIdx].lockedBy = !newLocked?cu.name:null;
+            db.sps[rollIdx].lockedAt = !newLocked?ts():null;
+            saveDB(); renderSPList(); renderAllSP();
+          }
+          toast('Lock kaydedilemedi: '+r.error.message,'err');
+        } else {
+          console.log('Lock saved: id='+sid+' locked='+newLocked);
+          // Sync data column separately so lockedByPIU inside JSONB also matches
+          var fresh = db.sps.find(function(x){ return x.id===sid; });
+          if(fresh) supa.from('subprojects').update({data: fresh, updated_at: new Date().toISOString()}).eq('id', sid);
+        }
       });
   }
 }
@@ -1893,18 +1923,34 @@ function toggleLockPY(idx){
   var p=db.pys[idx];
   if(!p){ toast('Record not found','err'); return; }
   var newLocked = p.lockedByPIU!==true;
+  var pRef = p.refNum;
+  // Optimistic local update
   p.lockedByPIU = newLocked;
   p.lockedBy = newLocked?cu.name:null;
   saveDB();
   renderPYList(); renderAllPY();
   toast(newLocked?'Payment locked':'Payment unlocked', newLocked?'warn':'info');
-  if(supa && p.refNum){
+  if(supa && pRef){
     supa.from('payments')
-      .update({locked_by_piu: newLocked, data: p, updated_at: new Date().toISOString()})
-      .eq('ref_num', Number(p.refNum))
+      .update({locked_by_piu: newLocked, updated_at: new Date().toISOString()})
+      .eq('ref_num', Number(pRef))
       .then(function(r){
-        if(r.error) console.error('PY lock error:', r.error);
-        else console.log('PY lock saved: ref='+p.refNum+' locked='+newLocked);
+        if(r.error){
+          console.error('PY lock error:', r.error);
+          // Rollback
+          var rollIdx = db.pys.findIndex(function(x){ return x.refNum===pRef; });
+          if(rollIdx>-1){
+            db.pys[rollIdx].lockedByPIU = !newLocked;
+            db.pys[rollIdx].lockedBy = !newLocked?cu.name:null;
+            saveDB(); renderPYList(); renderAllPY();
+          }
+          toast('Lock kaydedilemedi: '+r.error.message,'err');
+        } else {
+          console.log('PY lock saved: ref='+pRef+' locked='+newLocked);
+          // Sync data column separately
+          var freshP = db.pys.find(function(x){ return x.refNum===pRef; });
+          if(freshP) supa.from('payments').update({data: freshP, updated_at: new Date().toISOString()}).eq('ref_num', Number(pRef));
+        }
       });
   }
 }
@@ -1915,12 +1961,22 @@ function lockAll(lock){
   db.pys.forEach(function(p){ p.lockedByPIU=lock; p.lockedBy=lock?cu.name:null; });
   saveDB();
   if(supa){
+    // Step 1: update ONLY the lock column (prevents sync race)
     db.sps.forEach(function(s){
-      supa.from('subprojects').update({locked_by_piu:lock, data:s, updated_at:now}).eq('id',s.id);
+      supa.from('subprojects').update({locked_by_piu:lock, updated_at:now}).eq('id',s.id);
     });
     db.pys.forEach(function(p){
-      if(p.refNum) supa.from('payments').update({locked_by_piu:lock, data:p, updated_at:now}).eq('ref_num',Number(p.refNum));
+      if(p.refNum) supa.from('payments').update({locked_by_piu:lock, updated_at:now}).eq('ref_num',Number(p.refNum));
     });
+    // Step 2: after a short delay, sync data JSONB so lockedByPIU inside it also matches
+    setTimeout(function(){
+      db.sps.forEach(function(s){
+        supa.from('subprojects').update({data:s, updated_at:now}).eq('id',s.id);
+      });
+      db.pys.forEach(function(p){
+        if(p.refNum) supa.from('payments').update({data:p, updated_at:now}).eq('ref_num',Number(p.refNum));
+      });
+    }, 500);
   }
   renderSPList(); renderPYList(); renderAllSP(); renderAllPY();
   toast(lock?'All locked':'All unlocked', lock?'warn':'info');
