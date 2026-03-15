@@ -584,7 +584,7 @@ tbody td{padding:9px 14px;vertical-align:middle}
         <button class="btn btn-sm btn-o" onclick="exportXLSX()">📊 Excel</button>
       </div>
       <div style="overflow-x:auto">
-        <table><thead><tr><th>Ref#</th><th>DA</th><th>Beneficiary</th><th>Component</th><th>Approved (TL)</th><th>Disbursed (TL)</th><th>% Disb</th><th>Outstanding</th><th>Timestamp</th><th>Actions</th></tr></thead>
+        <table><thead><tr><th>Ref#</th><th>DA</th><th>Beneficiary</th><th>Component</th><th>Status</th><th>Approved (TL)</th><th>Disbursed (TL)</th><th>% Disb</th><th>Outstanding</th><th>Timestamp</th><th>Actions</th></tr></thead>
         <tbody id="py-tbody"></tbody></table>
       </div>
       <div style="padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--muted);border-top:1px solid var(--border)" id="py-count">0 records</div>
@@ -933,31 +933,23 @@ function nav(id){
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   $$('page-'+id).classList.add('active');
   var ni=$$('ni-'+id); if(ni) ni.classList.add('active');
-  if(id==='dashboard') renderDash();
-  if(id==='subproject'){
-    $$('sp-form').style.display='none';
-    $$('sp-list').style.display='block';
-    editSpIdx=null;
-    if(supa){
-      // Show loading state first
-      var tbody=$$('sp-tbody');
-      if(tbody) tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:30px;font-family:var(--mono);font-size:12px;color:var(--muted)">⏳ Syncing...</td></tr>';
-      syncFromCloud().then(function(){ renderSPList(); });
-    } else {
-      renderSPList();
-    }
+  // Sync on every navigation then render
+  if(id==='dashboard'){ if(cu&&cu.role==='piu'){ syncFromCloud().then(function(){ renderDash(); }); } else renderDash(); }
+  else if(id==='subproject'){
+    $$('sp-form').style.display='none'; $$('sp-list').style.display='block'; editSpIdx=null;
+    var spTbody=$$('sp-tbody');
+    if(spTbody) spTbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:30px;font-family:var(--mono);font-size:12px;color:var(--muted)">⏳ Syncing...</td></tr>';
+    syncFromCloud().then(function(){ renderSPList(); });
   }
-  if(id==='payment'){
-    if(supa){
-      syncFromCloud().then(function(){ renderPYList(); });
-    } else {
-      renderPYList();
-    }
+  else if(id==='payment'){
+    var pyTbody=$$('py-tbody');
+    if(pyTbody) pyTbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;font-family:var(--mono);font-size:12px;color:var(--muted)">⏳ Syncing...</td></tr>';
+    syncFromCloud().then(function(){ renderPYList(); });
   }
-  if(id==='indicators') renderInd();
-  if(id==='reporting'){ populateRepDA(); renderRep(); }
-  if(id==='users') renderUsers();
-  if(id==='alldata'){ renderAllSP(); renderAllPY(); }
+  else if(id==='indicators'){ syncFromCloud().then(function(){ renderInd(); }); }
+  else if(id==='reporting'){ syncFromCloud().then(function(){ populateRepDA(); renderRep(); }); }
+  else if(id==='users') renderUsers();
+  else if(id==='alldata'){ syncFromCloud().then(function(){ renderAllSP(); renderAllPY(); }); }
 }
 
 // ═══════════════════════════════════════════
@@ -1035,7 +1027,7 @@ function renderDash(){
     var idx=db.sps.indexOf(s);
     var com=parseInt(s.comTotalEmp)||0, cur=parseInt(s.curTotalEmp)||0;
     var sc=sbadge(s.status);
-    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">\uD83D\uDD12</span>';
+    if(s.lockedByPIU===true) sc+=' <span class="badge ba" style="font-size:9px">🔒 Kilitli</span>';
     if(com>0&&cur>0&&cur<com) sc+=' <span class="badge br" style="font-size:9px">\u2691</span>';
     return '<tr>'
       +'<td class="idc">'+spCode(s)+'</td>'
@@ -1182,7 +1174,7 @@ function _renderPIUDashInner(){
     var idx=db.sps.indexOf(s);
     var cm=parseInt(s.comTotalEmp)||0,r=parseInt(s.curTotalEmp)||0;
     var sc=sbadge(s.status);
-    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">\uD83D\uDD12</span>';
+    if(s.lockedByPIU===true) sc+=' <span class="badge ba" style="font-size:9px">🔒 Kilitli</span>';
     if(cm>0&&r>0&&r<cm) sc+=' <span class="badge br" style="font-size:9px">\u2691</span>';
     var es=s.lockedByPIU?'opacity:0.35;cursor:not-allowed':'';
     return '<tr>'
@@ -1512,7 +1504,7 @@ function renderSPTable(sps, tbodyId){
     var net=cur&&base?cur-base:null;
     var com=parseInt(s.comTotalEmp)||0;
     var sc=sbadge(s.status);
-    if(s.lockedByPIU) sc+=' <span class="badge ba" style="font-size:9px">🔒</span>';
+    if(s.lockedByPIU===true) sc+=' <span class="badge ba" style="font-size:9px">🔒 Kilitli</span>';
     if(com>0&&cur>0&&cur<com) sc+=' <span class="badge br" style="font-size:9px">⚑</span>';
     var netCell=net!==null?'<span style="color:'+(net>0?'var(--g500)':net<0?'var(--red)':'var(--muted)')+';">'+(net>0?'+':'')+net+'</span>':'—';
     var lockBtn='', delBtn='';
@@ -1752,6 +1744,7 @@ function clearPYForm(){
 
 function editPY(idx){
   var r=db.pys[idx];
+  if(!r){ toast('Record not found','err'); return; }
   if(r.lockedByPIU===true){
     try{ var ac=new (window.AudioContext||window.webkitAudioContext)(); var osc=ac.createOscillator(); var g=ac.createGain(); osc.connect(g); g.connect(ac.destination); osc.frequency.value=440; g.gain.setValueAtTime(0.3,ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.4); osc.start(); osc.stop(ac.currentTime+0.4); }catch(e){}
     toast('⛔ Bu ödeme PIU tarafından kilitlendi.','err');
@@ -1801,11 +1794,13 @@ function renderPYTable(pys, tbodyId){
       lockBtn='<button class="btn btn-xs" style="background:'+(p.lockedByPIU?'#fef3c7;color:#b45309':'#dbeafe;color:#1d4ed8')+';border:none" onclick="toggleLockPY('+idx+')">'+(p.lockedByPIU?'🔒':'🔓')+'</button>';
       delBtn='<button class="btn btn-xs btn-d" onclick="promptDel('+idx+',\'py\')">🗑</button>';
     }
+    var pyStatus=p.lockedByPIU===true?'<span class="badge ba" style="font-size:9px">🔒 Kilitli</span>':'';
     return '<tr>'
       +'<td class="idc">#'+p.refNum+'</td>'
       +'<td title="'+(p.da||'')+'">'+daAbbr(p.da)+'</td>'
       +'<td>'+(p.beneficiary||'—')+'</td>'
       +'<td>'+(p.component||'—')+'</td>'
+      +'<td>'+pyStatus+'</td>'
       +'<td style="font-family:var(--mono);font-size:11px">'+(p.approvedAmt?fmtNum(p.approvedAmt):'-')+'</td>'
       +'<td style="font-family:var(--mono);font-size:11px">'+(p.totalDisbursed?fmtNum(p.totalDisbursed):'-')+'</td>'
       +'<td>'+pct+'</td>'
@@ -1856,12 +1851,23 @@ function toggleLockSP(idx){
 }
 function toggleLockPY(idx){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
-  db.pys[idx].lockedByPIU=!db.pys[idx].lockedByPIU;
-  db.pys[idx].lockedBy=db.pys[idx].lockedByPIU?cu.name:null;
+  var p=db.pys[idx];
+  if(!p){ toast('Record not found','err'); return; }
+  var newLocked = p.lockedByPIU!==true;
+  p.lockedByPIU = newLocked;
+  p.lockedBy = newLocked?cu.name:null;
   saveDB();
-  cloudSavePY(Number(db.pys[idx].refNum), db.pys[idx]);
   renderPYList(); renderAllPY();
-  toast(db.pys[idx].lockedByPIU?'Locked':'Unlocked', db.pys[idx].lockedByPIU?'warn':'info');
+  toast(newLocked?'Payment locked':'Payment unlocked', newLocked?'warn':'info');
+  if(supa && p.refNum){
+    supa.from('payments')
+      .update({locked_by_piu: newLocked, data: p, updated_at: new Date().toISOString()})
+      .eq('ref_num', Number(p.refNum))
+      .then(function(r){
+        if(r.error) console.error('PY lock error:', r.error);
+        else console.log('PY lock saved: ref='+p.refNum+' locked='+newLocked);
+      });
+  }
 }
 function lockAll(lock){
   if(!cu||cu.role!=='piu'){ toast('PIU Admin only','err'); return; }
