@@ -586,7 +586,7 @@ const M = {
   'mustafa.yazar':  { n:'Mustafa Yazar',  i:'MY', r:'İzleme & Değerlendirme', e:'mustafa.yazar@sanayi.gov.tr',  c:'#1D9E75', unit:'idm' },
   'yener.akay':     { n:'Yener Akay',     i:'YA', r:'İzleme & Değerlendirme', e:'yener.akay@sanayi.gov.tr',     c:'#534AB7', unit:'idm' },
   'melis.kuzuoglu': { n:'Melis Kuzuoğlu', i:'MK', r:'Sosyal Uzman',           e:'melis.kuzuoglu@sanayi.gov.tr', c:'#5B8DEF', unit:'cevre' },
-  'tugce.yaman':    { n:'Tuğçe Yaman',    i:'TY', r:'Sosyal Uzman',           e:'tugce.yaman@sanayi.gov.tr',    c:'#F0A500', unit:'cevre' },
+  'safiyetugce.hazinedaryaman':    { n:'Safiye Tuğçe Hazinedarya',    i:'TY', r:'Sosyal Uzman',           e:'safiyetugce.hazinedaryaman@sanayi.gov.tr',    c:'#F0A500', unit:'cevre' },
   'ali.tellioglu':  { n:'Ali Tellioğlu',  i:'AT', r:'Çevre Mühendisi',        e:'ali.tellioglu@sanayi.gov.tr',  c:'#E26B4A', unit:'cevre' },
   'melike.yuksel':  { n:'Melike Yüksel',  i:'ML', r:'İletişim Uzmanı',        e:'melike.yuksel@sanayi.gov.tr',  c:'#2DB596', unit:'iletisim' },
   'demet.akcan':    { n:'Demet Akcan',    i:'DA', r:'Koordinatör Yardımcısı', e:'demet.akcan@sanayi.gov.tr',    c:'#BF5CBF', unit:'yonetim' },
@@ -598,7 +598,7 @@ const ML = Object.entries(M).map(([id,m])=>({id,...m}));
 
 const COMPS = {
   gof:   { l:'Geri Ödemeli Finansman', s:'GÖF',         c:'#5B8DEF', bg:'rgba(91,141,239,.2)',  t:'#93B8FF', o:['mustafa.yazar'] },
-  tesis: { l:'Tesis',                  s:'Tesis',        c:'#1D9E75', bg:'rgba(29,158,117,.2)', t:'#4ECFA0', o:['tugce.yaman','ali.tellioglu','yener.akay'] },
+  tesis: { l:'Tesis',                  s:'Tesis',        c:'#1D9E75', bg:'rgba(29,158,117,.2)', t:'#4ECFA0', o:['safiyetugce.hazinedaryaman','ali.tellioglu','yener.akay'] },
   hiz:   { l:'Hızlandırma & Kuluçka', s:'Hızlandırma',  c:'#F0A500', bg:'rgba(240,165,0,.2)',   t:'#FFD166', o:['melis.kuzuoglu'] },
   genel: { l:'Genel / PIU',            s:'PIU',          c:'#888',    bg:'rgba(136,136,136,.15)',t:'#AAAAAA', o:[] },
 };
@@ -641,10 +641,10 @@ let tasks = [
   { id:2,  title:'KAYS veri girişi şablonu güncelleme',      desc:'10 kalkınma ajansı için Excel makro şablonu revizyonu ve eğitim notları', comp:'tesis', unit:'idm',       status:'todo',       prio:'medium', dl:'2026-04-05', ass:['yener.akay','ali.tellioglu'],               cmt:[], ca:'2026-03-05', ua:'2026-03-05' },
   { id:3,  title:'GÖF sosyal medya iletişim paketi',         desc:'LinkedIn/Twitter içerikleri ve Bakan konuşma taslağı hazırlandı',         comp:'gof',   unit:'iletisim',  status:'done',       prio:'medium', dl:'2026-03-28', ass:['melike.yuksel'],                            cmt:[], ca:'2026-03-10', ua:'2026-03-25' },
   { id:4,  title:'Kuluçka programı uygulama çerçevesi',      desc:'10 ajans için hızlandırma programı rehberi taslağı',                      comp:'hiz',   unit:'cevre',     status:'todo',       prio:'high',   dl:'2026-04-20', ass:['melis.kuzuoglu'],                           cmt:[], ca:'2026-03-12', ua:'2026-03-12' },
-  { id:5,  title:'Tesis ziyaret raporu – Q1 2026',           desc:'Saha ziyaretleri konsolide raporu ve ajans değerlendirmeleri',            comp:'tesis', unit:'cevre',     status:'inprogress', prio:'high',   dl:'2026-04-15', ass:['tugce.yaman','ali.tellioglu','yener.akay'],  cmt:[], ca:'2026-03-15', ua:'2026-03-22' },
+  { id:5,  title:'Tesis ziyaret raporu – Q1 2026',           desc:'Saha ziyaretleri konsolide raporu ve ajans değerlendirmeleri',            comp:'tesis', unit:'cevre',     status:'inprogress', prio:'high',   dl:'2026-04-15', ass:['safiyetugce.hazinedaryaman','ali.tellioglu','yener.akay'],  cmt:[], ca:'2026-03-15', ua:'2026-03-22' },
   { id:6,  title:'PIU aylık ilerleme raporu – Mart',         desc:'Dünya Bankası için aylık ilerleme raporu (İngilizce)',                    comp:'genel', unit:'yonetim',   status:'todo',       prio:'high',   dl:'2026-04-01', ass:['hande.kara','demet.akcan'],                  cmt:[], ca:'2026-03-18', ua:'2026-03-18' },
   { id:7,  title:'Satın alma planı güncellemesi – 2026',     desc:'2026 yılı satın alma takvimi ve bütçe revizyonu',                        comp:'genel', unit:'satinalma', status:'inprogress', prio:'medium', dl:'2026-04-08', ass:['firat.aydin','ali.eser'],                   cmt:[], ca:'2026-03-20', ua:'2026-03-24' },
-  { id:8,  title:'SKDM eğitim programı tasarımı',            desc:'Sosyal kapsayıcılık ve dezavantajlı grup kriterleri eğitimi',             comp:'hiz',   unit:'cevre',     status:'todo',       prio:'low',    dl:'2026-05-01', ass:['melis.kuzuoglu','tugce.yaman'],             cmt:[], ca:'2026-03-22', ua:'2026-03-22' },
+  { id:8,  title:'SKDM eğitim programı tasarımı',            desc:'Sosyal kapsayıcılık ve dezavantajlı grup kriterleri eğitimi',             comp:'hiz',   unit:'cevre',     status:'todo',       prio:'low',    dl:'2026-05-01', ass:['melis.kuzuoglu','safiyetugce.hazinedaryaman'],             cmt:[], ca:'2026-03-22', ua:'2026-03-22' },
   { id:9,  title:'GÖF fon akış infografik güncelleme',       desc:'PIU→Ajans→Yararlanıcı akış görseli ve animasyonu',                       comp:'gof',   unit:'iletisim',  status:'todo',       prio:'medium', dl:'2026-04-12', ass:['melike.yuksel','mustafa.yazar'],             cmt:[], ca:'2026-03-23', ua:'2026-03-23' },
   { id:10, title:'Ajans ödeme talepleri incelemesi',         desc:'Q1 ödeme taleplerinin doğrulanması ve onay süreci',                      comp:'genel', unit:'finans',    status:'review',     prio:'high',   dl:'2026-04-03', ass:['hande.kara'],                               cmt:[], ca:'2026-03-24', ua:'2026-03-26' },
 ];
@@ -674,7 +674,7 @@ let messages = {
     { id:3, author:'demet.akcan',   text:'Tabii, Nisan 3 saat 14:00\'e toplantı oluşturuyorum. Davet göndereyim mi herkese?', ca:'2026-03-26T11:45:00', taskRef:null },
   ],
   tesis: [
-    { id:1, author:'tugce.yaman',   text:'Q1 saha ziyaretleri tamamlandı. 8 ajandan 7\'sinde ziyaret gerçekleştirildi.', ca:'2026-03-24T16:00:00', taskRef:5 },
+    { id:1, author:'safiyetugce.hazinedaryaman',   text:'Q1 saha ziyaretleri tamamlandı. 8 ajandan 7\'sinde ziyaret gerçekleştirildi.', ca:'2026-03-24T16:00:00', taskRef:5 },
     { id:2, author:'ali.tellioglu', text:'Konya ve Gaziantep ajanslarında ciddi çevresel bulgular var. Rapora ekledim, @tugce.yaman incelemelisin.', ca:'2026-03-25T09:15:00', taskRef:5 },
   ],
   hiz:[], cevre:[], idm:[], satinalma:[], iletisim:[], yonetim:[], finans:[],
@@ -700,7 +700,6 @@ function doLogin(){
     document.getElementById('li-err').style.display='block';
   }
 }
-document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 function doLogout(){ CU=null; document.getElementById('app').style.display='none'; document.getElementById('login-screen').style.display='flex'; actx=null; }
 
 function initApp(){
@@ -1308,8 +1307,10 @@ function initSidebarUnread(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
-document.getElementById('li-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-document.addEventListener('DOMContentLoaded',()=>{ initSidebarUnread(); });
+document.addEventListener('DOMContentLoaded',()=>{
+  initSidebarUnread();
+  document.getElementById('li-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+});
 setTimeout(initSidebarUnread, 100);
 </script>
 </body>
